@@ -22,17 +22,22 @@ class KeyHandler {
             " ": "dash"
         }
 
-        $(document).keydown(event => {
+        // todo: rewrite in vanilla js
+        // only detect keystokes when hovering over game canvas (div)
+
+        //const gameArea = document.getElementById("gameArea");
+
+        document.addEventListener("keydown", event => {
             if (this.keyBindings[event.key]) this.#keyStates.add(this.keyBindings[event.key]);
             this.#changed = true;
         });
 
-        $(document).keyup(event => {
+        document.addEventListener("keyup", event => {
             if (this.keyBindings[event.key]) this.#keyStates.delete(this.keyBindings[event.key]);
             this.#changed = true;
         });
 
-        $(document).mousedown(event => {
+        document.addEventListener("mousedown", event => {
             if (this.keyBindings[this.MOUSE_BUTTONS[event.button]]) {
                 this.#keyStates.add(this.keyBindings[this.MOUSE_BUTTONS[event.button]]);
             }
@@ -40,7 +45,7 @@ class KeyHandler {
             this.#changed = true;
         });
 
-        $(document).mouseup(event => {
+        document.addEventListener("mouseup", event => {
             if (this.keyBindings[this.MOUSE_BUTTONS[event.button]]) {
                 this.#keyStates.delete(this.keyBindings[this.MOUSE_BUTTONS[event.button]]);
             }
@@ -48,9 +53,11 @@ class KeyHandler {
             this.#changed = true;
         });
 
-        $(window).focus(() => this.#keyStates = new Set());
+        window.addEventListener('focus', () => this.#keyStates = new Set());
+        window.addEventListener('blur', () => this.#keyStates = new Set());
 
         document.addEventListener('contextmenu', event => event.preventDefault())
+        
     }
     
     get keyStates() { return this.#keyStates; }

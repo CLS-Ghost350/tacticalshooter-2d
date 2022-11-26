@@ -13,7 +13,7 @@ export default class Player extends Phaser.GameObjects.Image {
         this.mainPlayer = mainPlayer;
 
         this.setAngle(angle);
-        this.setScale(0.7);
+        this.setScale(0.75);
 
         this.bow = new Bow(game,this);
     }

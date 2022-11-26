@@ -8,8 +8,11 @@ const Player = require("./Player.js");
 module.exports = class Connection {
     #socket;
 
-    keyStates = [];
-    targetAngle = 0;
+    #keyStates = [];
+    #targetAngle = 0;
+
+    get keyStates() { return this.#keyStates };
+    get targetAngle() { return this.#targetAngle };
 
     // constants
     get ID() { return this.#socket.id; }
@@ -33,14 +36,12 @@ module.exports = class Connection {
             console.info({ "PLAYER JOINED GAME": { id: this.ID } });
 
             this.player = new Player(this.game,this.ID,this);
-
-            this.game.io.emit("player", { x: 0, y: 0, angle: 0, id: this.ID});
         })
 
         this.#socket.on("updateData",msg => {
             if (!this.player) return this.destroy();
-            if (!isNaN(msg.targetAngle)) this.targetAngle = msg.targetAngle;
-            if (msg.keyStates instanceof Array) this.keyStates = msg.keyStates;
+            if (!isNaN(msg.targetAngle)) this.#targetAngle = msg.targetAngle;
+            if (msg.keyStates instanceof Array) this.#keyStates = msg.keyStates;
         });
     }
 
