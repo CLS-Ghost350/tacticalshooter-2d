@@ -6,15 +6,15 @@ module.exports = class Player extends GameObject {
     // move settings to seperate file? make them static?
     RADIUS = 15;
 
-    DEFAULT_ACCEL = 3.6;
-    BOW_DRAW_MOVE_ACCEL = 2.9;
+    DEFAULT_ACCEL = 3.4;
+    BOW_DRAW_MOVE_ACCEL = 2.6;
     MOVE_FRICTION = 0.5;
 
     ROTATION_ACCEL = 0.45;
     ROTATION_DECCEL = 1.1; // above 1
     ROTATION_FRICTION = 0.3;
 
-    BOW_DRAW_TIME = 17;
+    BOW_DRAW_TIME = 15;
 
     rotationVel = 0;
     angle = 0;

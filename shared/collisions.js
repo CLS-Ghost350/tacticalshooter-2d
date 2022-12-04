@@ -99,5 +99,5 @@ module.exports = {
     lineLine,
     lineCircle,
     linePoint,
-    pointCircle
+    pointCircle,
 }

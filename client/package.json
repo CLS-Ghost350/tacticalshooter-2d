@@ -10,6 +10,7 @@
   "author": "Me da Ghost",
   "license": "ISC",
   "dependencies": {
+    "bezier-easing": "^2.1.0",
     "phaser": "^3.55.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"

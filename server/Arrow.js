@@ -9,7 +9,7 @@ module.exports = class Arrow extends GameObject {
 
     position = { x: 0, y: 0 };
     angle;
-    #velocity = 50;
+    #velocity = 70;
 
     #despawnTimer = 300;
 

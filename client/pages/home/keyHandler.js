@@ -13,13 +13,13 @@ class KeyHandler {
         };
 
         this.keyBindings = {
-            w: "moveUp",
-            s: "moveDown",
-            a: "moveLeft",
-            d: "moveRight",
-            mouseRight: "shoot",
-            mouseLeft: "hit",
-            " ": "dash"
+            "KeyW": "moveUp",
+            "KeyS": "moveDown",
+            "KeyA": "moveLeft",
+            "KeyD": "moveRight",
+            "mouseRight": "shoot",
+            "mouseLeft": "hit",
+            "ShiftLeft": "zoom"
         }
 
         // todo: rewrite in vanilla js
@@ -28,29 +28,35 @@ class KeyHandler {
         //const gameArea = document.getElementById("gameArea");
 
         document.addEventListener("keydown", event => {
-            if (this.keyBindings[event.key]) this.#keyStates.add(this.keyBindings[event.key]);
+            if (event.defaultPrevented) return; // Do nothing if event already handled
+            if (this.keyBindings[event.code]) this.#keyStates.add(this.keyBindings[event.code]);
             this.#changed = true;
+            //event.preventDefault();
         });
 
         document.addEventListener("keyup", event => {
-            if (this.keyBindings[event.key]) this.#keyStates.delete(this.keyBindings[event.key]);
+            if (event.defaultPrevented) return; // Do nothing if event already handled
+            if (this.keyBindings[event.code]) this.#keyStates.delete(this.keyBindings[event.code]);
             this.#changed = true;
+            //event.preventDefault();
         });
 
         document.addEventListener("mousedown", event => {
-            if (this.keyBindings[this.MOUSE_BUTTONS[event.button]]) {
+            //if (event.defaultPrevented) return; // Do nothing if event already handled
+            if (this.keyBindings[this.MOUSE_BUTTONS[event.button]]) 
                 this.#keyStates.add(this.keyBindings[this.MOUSE_BUTTONS[event.button]]);
-            }
             
             this.#changed = true;
+            event.preventDefault();
         });
 
         document.addEventListener("mouseup", event => {
-            if (this.keyBindings[this.MOUSE_BUTTONS[event.button]]) {
+            //if (event.defaultPrevented) return; // Do nothing if event already handled
+            if (this.keyBindings[this.MOUSE_BUTTONS[event.button]]) 
                 this.#keyStates.delete(this.keyBindings[this.MOUSE_BUTTONS[event.button]]);
-            }
 
             this.#changed = true;
+            event.preventDefault();
         });
 
         window.addEventListener('focus', () => this.#keyStates = new Set());

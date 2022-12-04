@@ -1,7 +1,7 @@
 import util from "@shared/util";
 
 export default class Bow extends Phaser.GameObjects.Sprite {
-    FRAME_RATE = 12;
+    FRAME_RATE = 13;
 
     constructor(game,player) {
         super(game,player.x,player.y,"bowSpritesheet");
