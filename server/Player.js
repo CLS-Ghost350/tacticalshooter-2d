@@ -52,7 +52,7 @@ module.exports = class Player extends GameObject {
     }
 
     updateBow() {
-        if (this.connection.keyStates.includes("shoot")) { // holding shoot button (right-click)
+        if (this.connection.keyStates.includes("drawBow")) { // holding shoot button (right-click)
             if (this.bowDrawStatus == 0) this.game.io.emit("bowDraw",{ playerID: this.ID }) // start drawing
             if (this.bowDrawStatus < this.BOW_DRAW_TIME) this.bowDrawStatus += 1; // increase time drawn
         } else if (this.bowDrawStatus > 0) {

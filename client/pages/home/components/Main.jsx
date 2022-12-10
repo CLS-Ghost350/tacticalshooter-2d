@@ -3,9 +3,13 @@ import { useState, useEffect } from "react";
 
 import styles from "@/styles/home.module.css"
 
+import SettingsMenu from "./SettingsMenu.jsx";
+
 export default function Main(props) {
+    const [ settingsOpen, setSettingsOpen ] = useState(false);
 
     return <>
-        <h1></h1>
+        <img className={styles.settingsIcon} src="/assets/settingsIcon.png" onClick={ () => setSettingsOpen(!settingsOpen) }/>
+        <SettingsMenu open={settingsOpen} close={ () => setSettingsOpen(false) }/>
     </>
 }

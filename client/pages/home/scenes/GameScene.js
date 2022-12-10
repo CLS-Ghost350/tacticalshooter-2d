@@ -11,6 +11,10 @@ import Arrow from "../gameObjects/Arrow";
 import VisibilityPolygon from "../VisibilityPolygon";
 import bezier from "bezier-easing";
 
+import { store } from "../store";
+import { setSetting } from "../settingsSlice";
+import { subscribeActionAfter, subscribeAfter } from 'redux-subscribe-action';
+
 export default class GameScene extends Phaser.Scene {
     #gameInited = false;
     #players = {};
@@ -19,14 +23,16 @@ export default class GameScene extends Phaser.Scene {
     walls = [];
     unintersectingWalls = [];
 
-    //zoomCurve = bezier(.3,.72,0,1);
-    zoomCurve = a=>a*1.6;
+    zoomCurve = bezier(.3,.72,0,1);
+    zoomCurveLinear = a=>a*1.7;
 
     ZOOM_SCALE = CONFIG.width/2 * 0.6;
     heightWidthRatio = CONFIG.height / CONFIG.width;
     ZOOM_SPEED = 0.25;
     ZOOMED_FOV = 0.4;
     zoomDist = 0;
+
+    zoomToggled = false;
 
     constructor() { super("GameScene"); }
 
@@ -60,14 +66,13 @@ export default class GameScene extends Phaser.Scene {
         }).catch(e => {
             console.log(e);
         })
-            
+
+        keyHandler.onInputDown("zoom", () => this.zoomToggled = !this.zoomToggled);
 
         socket.emit("joinGame");
     }
 
     update(time,delta) {
-        this.debug.clear();
-
         if (!this.#gameInited) {
             if (this.#players[socket.id]) {
                 this.#gameInited = true;
@@ -76,9 +81,12 @@ export default class GameScene extends Phaser.Scene {
             } else return;
         }
 
+        this.debug.clear();
+
+        const sharedState = store.getState();
         const keyStates = keyHandler.keyStates;
 
-        const zooming = keyStates.has("zoom");
+        const zooming = sharedState.settings.alwaysZooming || sharedState.settings.toggledZoom? this.zoomToggled : keyStates.has("zoom");
 
         const mouseAngle = Phaser.Math.Angle.Between(
             CONFIG.width / 2,
@@ -87,13 +95,13 @@ export default class GameScene extends Phaser.Scene {
             this.input.activePointer.y
         );
 
-        this.updateZoomDist(zooming);
+        this.updateZoomDist(zooming, sharedState.settings.zoomCurve? this.zoomCurve : this.zoomCurveLinear);
         const offsetX = Math.cos(mouseAngle) * this.zoomDist * this.ZOOM_SCALE;
         const offsetY = Math.sin(mouseAngle) * this.zoomDist * this.heightWidthRatio * this.ZOOM_SCALE;
 
         this.cameras.main.setFollowOffset(-offsetX, -offsetY);
         
-        this.drawShadows(offsetX, offsetY, this.zoomDist > 0, this.#players.main.rotation);
+        this.drawShadows(offsetX, offsetY, sharedState.settings.zoomedViewCone && this.zoomDist > 0, this.#players.main.rotation);
     
         this.displayWalls();
 
@@ -164,14 +172,14 @@ export default class GameScene extends Phaser.Scene {
         }),100)
     }
 
-    updateZoomDist(zooming) {
+    updateZoomDist(zooming, zoomCurve) {
         let zoomAmount = 0;
 
         if (zooming) {
             const dx = this.input.activePointer.x - CONFIG.width/2;
             const dy = this.input.activePointer.y - CONFIG.height/2;
             const dist = Math.sqrt((dx * this.heightWidthRatio)**2 + dy**2);
-            zoomAmount = this.zoomCurve(dist / Math.sqrt(2 * (CONFIG.width/2)**2));
+            zoomAmount = zoomCurve(dist / Math.sqrt(2 * (CONFIG.width/2)**2));
         }
 
         const dz = zoomAmount - this.zoomDist;
@@ -187,7 +195,7 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
-    drawShadows(offsetX, offsetY, zoomed, angle) {
+    drawShadows(offsetX, offsetY, restrictFOV, angle) {
         const viewTop = this.#players.main.y - CONFIG.height/2 + offsetY;
         const viewLeft = this.#players.main.x - CONFIG.width/2 + offsetX;
         const viewBottom = this.#players.main.y + CONFIG.height/2 + offsetY;
@@ -195,7 +203,7 @@ export default class GameScene extends Phaser.Scene {
 
         let walls = this.unintersectingWalls;
 
-        if (false && zoomed) { // restricted visibility cone disabled
+        if (restrictFOV) { // restricted visibility cone disabled
             const cwAngle = angle + this.ZOOMED_FOV;
             const ccwAngle = angle - this.ZOOMED_FOV;
 

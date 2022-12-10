@@ -1,10 +1,18 @@
+import { store } from "./store";
+import { setKeybind } from "./settingsSlice";
+import { subscribeActionAfter, subscribeAfter } from 'redux-subscribe-action';
+
 class KeyHandler {
     static #initiated = false;
 
     #keyStates = new Set();
     #changed = false;
+    keyBindings = {};
 
-    get MOUSE_BUTTONS() { return ["mouseLeft","mouseMiddle","mouseRight"]; }
+    #inputDownHandlers = {};
+    #inputUpHandlers = {};
+
+    get MOUSE_BUTTONS() { return ["MouseLeft","MouseMiddle","MouseRight"]; }
 
     constructor() {
         if (!KeyHandler.#initiated) KeyHandler.#initiated = true;
@@ -12,15 +20,8 @@ class KeyHandler {
             "CLASS ERROR": "Singleton 'KeyHandler' cannot be initiated more than once." 
         };
 
-        this.keyBindings = {
-            "KeyW": "moveUp",
-            "KeyS": "moveDown",
-            "KeyA": "moveLeft",
-            "KeyD": "moveRight",
-            "mouseRight": "shoot",
-            "mouseLeft": "hit",
-            "ShiftLeft": "zoom"
-        }
+        this.updateKeyBindings();
+        subscribeActionAfter(setKeybind.toString(), this.updateKeyBindings.bind(this));
 
         // todo: rewrite in vanilla js
         // only detect keystokes when hovering over game canvas (div)
@@ -29,31 +30,55 @@ class KeyHandler {
 
         document.addEventListener("keydown", event => {
             if (event.defaultPrevented) return; // Do nothing if event already handled
-            if (this.keyBindings[event.code]) this.#keyStates.add(this.keyBindings[event.code]);
+
+            if (this.keyBindings[event.code]) {
+                this.keyBindings[event.code].forEach(type => {
+                    this.#keyStates.add(type);
+                    this.#inputDownHandlers[type]?.forEach(func => func());
+                }, this.#keyStates);
+            }
+
             this.#changed = true;
             //event.preventDefault();
         });
 
         document.addEventListener("keyup", event => {
             if (event.defaultPrevented) return; // Do nothing if event already handled
-            if (this.keyBindings[event.code]) this.#keyStates.delete(this.keyBindings[event.code]);
+
+            if (this.keyBindings[event.code]) {
+                this.keyBindings[event.code].forEach(type => {
+                    this.#keyStates.delete(type);
+                    this.#inputUpHandlers[type]?.forEach(func => func());
+                }, this.#keyStates);
+            }
+
             this.#changed = true;
             //event.preventDefault();
         });
 
         document.addEventListener("mousedown", event => {
             //if (event.defaultPrevented) return; // Do nothing if event already handled
-            if (this.keyBindings[this.MOUSE_BUTTONS[event.button]]) 
-                this.#keyStates.add(this.keyBindings[this.MOUSE_BUTTONS[event.button]]);
+
+            if (this.keyBindings[this.MOUSE_BUTTONS[event.button]]) {
+                this.keyBindings[this.MOUSE_BUTTONS[event.button]].forEach(type => {
+                    this.#keyStates.add(type);
+                    this.#inputDownHandlers[type]?.forEach(func => func());
+                }, this.#keyStates);
+            }
             
             this.#changed = true;
-            event.preventDefault();
+            //event.preventDefault();
         });
 
         document.addEventListener("mouseup", event => {
             //if (event.defaultPrevented) return; // Do nothing if event already handled
-            if (this.keyBindings[this.MOUSE_BUTTONS[event.button]]) 
-                this.#keyStates.delete(this.keyBindings[this.MOUSE_BUTTONS[event.button]]);
+
+            if (this.keyBindings[this.MOUSE_BUTTONS[event.button]]) {
+                this.keyBindings[this.MOUSE_BUTTONS[event.button]].forEach(type => {
+                    this.#keyStates.delete(type);
+                    this.#inputUpHandlers[type]?.forEach(func => func());
+                }, this.#keyStates);
+            }
 
             this.#changed = true;
             event.preventDefault();
@@ -64,6 +89,7 @@ class KeyHandler {
 
         document.addEventListener('contextmenu', event => event.preventDefault())
         
+        // listen to store changes and change keybinds
     }
     
     get keyStates() { return this.#keyStates; }
@@ -73,6 +99,28 @@ class KeyHandler {
             this.changed = false;
             return true;
         } else return false;
+    }
+
+    updateKeyBindings() {
+        const keybinds = store.getState().settings.keybinds;
+
+        this.keyBindings = {};
+        for (const [ type, key ] of Object.entries(keybinds)) {
+            if (!this.keyBindings[key]) this.keyBindings[key] = new Set();
+            this.keyBindings[key].add(type);
+        }
+    }
+
+    onInputDown(type, listener) {
+        if (!this.#inputDownHandlers[type]) this.#inputDownHandlers[type] = [];
+        this.#inputDownHandlers[type].push(listener);
+        return () => this.#inputDownHandlers[type].filter(func => func != listener);
+    }
+
+    onInputUp(type, listener) {
+        if (!this.#inputUpHandlers[type]) this.#inputUpHandlers[type] = [];
+        this.#inputUpHandlers[type].push(listener);
+        return () => this.#inputUpHandlers[type].filter(func => func != listener);
     }
 };
 
