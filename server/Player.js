@@ -38,8 +38,8 @@ module.exports = class Player extends GameObject {
     update(deltaTime) {
         const deltaTimeMul = deltaTime/1000 * this.game.CORRECT_TPS;
 
-        this.updatePosition(deltaTimeMul);
-        this.collideWalls();
+        this.updateVelocity(deltaTimeMul);
+        this.moveCollideWalls(deltaTimeMul);
         this.updateRotation(deltaTimeMul);
         this.updateBow();
 
@@ -65,7 +65,10 @@ module.exports = class Player extends GameObject {
         }
     }
 
-    updatePosition(deltaTimeMul) {
+    updateVelocity(deltaTimeMul) {
+        this.vel.x *= this.MOVE_FRICTION ** deltaTimeMul;
+        this.vel.y *= this.MOVE_FRICTION ** deltaTimeMul;
+
         this.move.x = 0;
         this.move.y = 0;
 
@@ -88,12 +91,6 @@ module.exports = class Player extends GameObject {
             this.vel.x += this.move.x * this.DEFAULT_ACCEL;
             this.vel.y += this.move.y * this.DEFAULT_ACCEL;
         }
-
-        this.position.x += this.vel.x * deltaTimeMul;
-        this.position.y += this.vel.y * deltaTimeMul;
-
-        this.vel.x *= this.MOVE_FRICTION ** deltaTimeMul;
-        this.vel.y *= this.MOVE_FRICTION ** deltaTimeMul;
     }
 
     updateRotation(deltaTimeMul) {
@@ -110,81 +107,80 @@ module.exports = class Player extends GameObject {
         this.rotationVel *= this.ROTATION_FRICTION ** deltaTimeMul;
     }
 
-    collideWalls() {
-        // temperary solution:
-        // prioritize walls whoses angles are closer being perpendicular to the player's velocity's angle
-        // then, prioritize updating previous walls
-        // has many bugs, not efficient (implementation using set, sorting array for each player), fix this later
-        const vAngle = Math.atan2(this.vel.y, this.vel.x);
-        const pvAngle = vAngle + Math.PI/2;
+    moveCollideWalls(deltaTimeMul) {
+        // code could prob be better, but IT WORKS!!!!
+        // run after velocity is updated, before movement is updated
 
-        this.game.walls.sort((a, b) => {
-            const wAngle1 = Math.abs(Math.atan2(a.end.y - a.start.y, a.end.x - a.start.x));
-            const wAngle2 = Math.abs((Math.atan2(b.end.y - b.start.y, b.end.x - b.start.x)));
+        const moveX = this.vel.x * deltaTimeMul;
+        const moveY = this.vel.y * deltaTimeMul;
 
-            if (Math.abs(pvAngle - wAngle1) < Math.abs(pvAngle - wAngle2)) return -1;
-            else return 1;
-        })
+        const moveAngle = Math.atan2(moveY, moveX);
+        //const perpMoveAngle = vAngle + Math.PI/2;
+        const moveDist = Math.sqrt(moveX**2 + moveY**2);
 
-        const newWalls = [];
-        const mergedWalls = [ ...new Set([ ...this.previousWalls, ...this.game.walls ]) ];
+        let minMoveX = Math.abs(moveX);
+        let minMoveY = Math.abs(moveY);
 
-        for (const wall of mergedWalls) {
-             // returns the closest point to the circle on the line if intersecting or null
-
+        for (const wall of this.game.walls) {
             const { x: x1, y: y1 } = wall.start;
             const { x: x2, y: y2 } = wall.end;
 
             const dx = x2 - x1;
             const dy = y2 - y1;
-    
+
             const len = Math.sqrt(dx**2 + dy**2);
         
             // get dot product of the line and circle
             const dot = ( ((this.position.x-x1)*dx) + ((this.position.y-y1)*dy) ) / len**2;
         
-            // find the closest point on the line
-            const closestX = x1 + (dot * dx);
-            const closestY = y1 + (dot * dy);
-
-            const pdx = closestX - this.position.x;
-            const pdy = closestY - this.position.y;
+            // find the closest point on the infinitely long line
+            let closestX = x1 + (dot * dx);
+            let closestY = y1 + (dot * dy);
 
             let distance;
 
-            // is the player colliding?
-            const intersecting = (() => {
-                // is either end inside the circle?
-                if (collisions.pointCircle(x1,y1, this.position.x,this.position.y,this.RADIUS) || 
-                    collisions.pointCircle(x2,y2, this.position.x,this.position.y,this.RADIUS)) {
+            if (!collisions.linePoint(x1,y1,x2,y2, closestX,closestY,len)) {
+                // closest point not on the line segment
+                // closest point must be one of the line's endpoints
 
-                    distance = Math.sqrt(pdx**2 + pdy**2);
-                    return true;
+                const dist1 = util.pointsDistance(this.position.x, this.position.y, x1, y1);
+                const dist2 = util.pointsDistance(this.position.x, this.position.y, x2, y2);
+
+                if (dist1 < dist2) {
+                    distance = dist1;
+                    closestX = x1;
+                    closestY = y1;
+                } else {
+                    distance = dist2;
+                    closestX = x2;
+                    closestY = y2;
                 }
+            } else distance = util.pointsDistance(this.position.x, this.position.y, closestX, closestY)
 
-                // is the closest point actually on the line segment?
-                if (!collisions.linePoint(x1,y1,x2,y2, closestX,closestY,len)) return false;
+            // find the movement amounts along perpendicular and parallel axes to the wall
+            const playerToWallAngle = Math.atan2(this.position.y - closestY, this.position.x - closestX);
+            const moveWallAngleDiff = playerToWallAngle - moveAngle;
 
-                // get distance to closest point
-                distance = Math.sqrt(pdx**2 + pdy**2);
-                if (distance <= this.RADIUS) return true;
+            const parallelMove = -Math.sin(moveWallAngleDiff) * moveDist;
+            const perpMove = -Math.cos(moveWallAngleDiff) * moveDist;
 
-                return false;
-            })();
+            //console.log(Math.round(perpMove*10)/10 + " " + Math.round(parallelMove*10)/10);
 
-            if (!intersecting) continue;
+            const perpMoveCollide = Math.min(perpMove, distance - this.RADIUS);
 
-            newWalls.push(wall);
+            // change the movement along wall axes to regular x and y axes
+            const playerToWallAnglePerp = playerToWallAngle - Math.PI/2;
+            const collideMoveX = Math.cos(playerToWallAngle)*perpMoveCollide + Math.cos(playerToWallAnglePerp)*parallelMove;
+            const collideMoveY = Math.sin(playerToWallAngle)*perpMoveCollide + Math.sin(playerToWallAnglePerp)*parallelMove;
 
-            const scale = this.RADIUS/distance - 1;
-            const moveX = scale * pdx;
-            const moveY = scale * pdy;
-            
-            this.position.x -= moveX;
-            this.position.y -= moveY;
+            console.log(Math.round(collideMoveX*10)/10 + " " + Math.round(collideMoveY*10)/10)
+
+            minMoveX = Math.min(collideMoveX * (-Math.sign(moveX)), minMoveX);
+            minMoveY = Math.min(collideMoveY * (-Math.sign(moveY)), minMoveY);
         }
 
-        this.previousWalls = newWalls;
+        this.position.x += minMoveX * Math.sign(moveX);
+        this.position.y += minMoveY * Math.sign(moveY);
     }
 
     kill() {

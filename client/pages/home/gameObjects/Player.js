@@ -3,7 +3,6 @@ import util from "@shared/util";
 import Bow from "./Bow.js";
 
 export default class Player extends Phaser.GameObjects.Image {
-    ROTATION_SPEED = 1;
 
     constructor(game,x,y,angle,mainPlayer) {
         super(game,x,y,"playerImg");
