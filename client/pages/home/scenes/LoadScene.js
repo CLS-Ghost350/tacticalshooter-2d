@@ -14,6 +14,7 @@ export default class LoadScene extends Phaser.Scene {
         this.load.image("backgroundImg", asset("backgroundDemo.png"));
         this.load.image("playerImg",asset("playerDemo.png"));
         this.load.image("arrowImg", asset("arrowDemo.png"));
+        this.load.image("shadowImg", asset("shadow.png"));
 
         this.load.spritesheet("bowSpritesheet",asset("bowDemoSpritesheet.png"),{
             frameWidth: 21,

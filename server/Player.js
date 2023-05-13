@@ -6,15 +6,15 @@ module.exports = class Player extends GameObject {
     // move settings to seperate file? make them static?
     RADIUS = 15;
 
-    DEFAULT_ACCEL = 3.4;
+    DEFAULT_ACCEL = 3.4; // increase move speed, decrease bow draw time
     BOW_DRAW_MOVE_ACCEL = 2.6;
-    MOVE_FRICTION = 0.5;
+    MOVE_FRICTION = 0.55//0.5;
 
     ROTATION_ACCEL = 0.45;
     ROTATION_DECCEL = 1.1; // above 1
     ROTATION_FRICTION = 0.3;
 
-    BOW_DRAW_TIME = 15;
+    BOW_DRAW_TIME = 15;//10;//15;
 
     rotationVel = 0;
     angle = 0;
@@ -173,7 +173,7 @@ module.exports = class Player extends GameObject {
             const collideMoveX = Math.cos(playerToWallAngle)*perpMoveCollide + Math.cos(playerToWallAnglePerp)*parallelMove;
             const collideMoveY = Math.sin(playerToWallAngle)*perpMoveCollide + Math.sin(playerToWallAnglePerp)*parallelMove;
 
-            console.log(Math.round(collideMoveX*10)/10 + " " + Math.round(collideMoveY*10)/10)
+            //console.log(Math.round(collideMoveX*10)/10 + " " + Math.round(collideMoveY*10)/10)
 
             minMoveX = Math.min(collideMoveX * (-Math.sign(moveX)), minMoveX);
             minMoveY = Math.min(collideMoveY * (-Math.sign(moveY)), minMoveY);

@@ -52,6 +52,11 @@ export default class GameScene extends Phaser.Scene {
         this.backgroundImg.setScale(10);
         this.backgroundImg.setDepth(-100);
 
+        this.shadows = this.add.image(0, 0, "shadowImg");
+        this.shadows.setScale(CONFIG.width, CONFIG.height);
+        this.shadows.setDepth(100);
+        this.shadows.setAlpha(0.65);
+
         this.#handleSocket();
 
         fetch("/maps/test2.json").then(response => {
@@ -234,39 +239,6 @@ export default class GameScene extends Phaser.Scene {
         
         const start = visibilityPolygon[0];
         const end = visibilityPolygon[visibilityPolygon.length - 1];
-        const outerRectStart = [ viewRight + 5, (start[1] + end[1])/2 ];
-        
-        /*
-        //this.debug.setDepth(1000);
-        this.debug.fillStyle(0x00ff00);
-        this.debug.fillCircle(start[0],start[1],5);
-        this.debug.fillStyle(0x0000ff);
-        this.debug.fillCircle(end[0],end[1],5);
-        
-        // bug when this line passes through visible area
-        //this.debug.lineBetween(end[0],end[1],viewRight+5, viewTop-5);
-        this.debug.lineBetween(end[0],end[1],outerRectStart[0],outerRectStart[1])
-        //this.debug.lineBetween(end[0],end[1],end[0]+10000,end[1])
-        */
-        
-        if (this.visPoly) this.visPoly.destroy();
-
-        this.visPoly = this.add.polygon(0, 0, [
-            ...visibilityPolygon, 
-            outerRectStart,
-            [viewRight + 5, viewTop - 5],
-            [viewLeft - 5, viewTop - 5],
-            [viewLeft - 5, viewBottom + 5],
-            [viewRight + 5, viewBottom + 5],
-            outerRectStart,
-            end
-        ], 0x000000);
-
-        this.visPoly.setOrigin(0,0);
-        this.visPoly.setDepth(100);
-        this.visPoly.setAlpha(0.65);
-
-        
 
         this.visibilityGraphics.fillStyle(0xff0000);
         this.visibilityGraphics.clear();
@@ -289,5 +261,11 @@ export default class GameScene extends Phaser.Scene {
             //arrow.clearMask();
             arrow.setMask(this.visibilityMask);
         }
+
+        this.shadowsVisibilityMask = this.visibilityGraphics.createGeometryMask();
+        this.shadowsVisibilityMask.setInvertAlpha();
+
+        this.shadows.setPosition(this.#players.main.x + offsetX, this.#players.main.y - offsetY);
+        this.shadows.setMask(this.shadowsVisibilityMask);
     }
-};
+}
