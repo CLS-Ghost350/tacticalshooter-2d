@@ -10,22 +10,22 @@
   "author": "Me da Ghost",
   "license": "ISC",
   "dependencies": {
-    "@reduxjs/toolkit": "^1.9.1",
+    "@reduxjs/toolkit": "^1.9.5",
     "bezier-easing": "^2.1.0",
-    "phaser": "^3.55.2",
+    "phaser": "^3.60.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-redux": "^8.0.5",
     "redux-subscribe-action": "^2.1.3"
   },
   "devDependencies": {
-    "@babel/core": "^7.19.6",
-    "@babel/preset-env": "^7.19.4",
+    "@babel/core": "^7.21.8",
+    "@babel/preset-env": "^7.21.5",
     "@babel/preset-react": "^7.18.6",
-    "babel-loader": "^9.0.1",
-    "css-loader": "^6.7.1",
-    "style-loader": "^3.3.1",
-    "webpack-bundle-analyzer": "^4.7.0",
+    "babel-loader": "^9.1.2",
+    "css-loader": "^6.7.4",
+    "style-loader": "^3.3.3",
+    "webpack-bundle-analyzer": "^4.8.0",
     "webpack-cli": "^4.10.0"
   },
   "babel": {

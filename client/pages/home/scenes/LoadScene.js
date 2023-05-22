@@ -16,6 +16,10 @@ export default class LoadScene extends Phaser.Scene {
         this.load.image("arrowImg", asset("arrowDemo.png"));
         this.load.image("shadowImg", asset("shadow.png"));
 
+        this.load.image("minimapImg", asset("minimapDemo.png"));
+        //this.load.svg("minimapImg", asset("minimap.svg"), { scale: 0.1 });
+        this.load.image("minimapShadowsImg", asset("minimapShadows.png"));
+
         this.load.spritesheet("bowSpritesheet",asset("bowDemoSpritesheet.png"),{
             frameWidth: 21,
             frameHeight: 26,

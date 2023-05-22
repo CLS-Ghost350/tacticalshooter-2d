@@ -7,6 +7,8 @@ import CONFIG from "../phaserConfig";
 
 import Player from "../gameObjects/Player";
 import Arrow from "../gameObjects/Arrow";
+import Shadows from "../gameObjects/Shadows";
+import Minimap from "../gameObjects/Minimap";
 
 import VisibilityPolygon from "../VisibilityPolygon";
 import bezier from "bezier-easing";
@@ -19,6 +21,8 @@ export default class GameScene extends Phaser.Scene {
     #gameInited = false;
     #players = {};
     #arrows = {};
+
+    get players() { return this.#players; }
 
     walls = [];
     unintersectingWalls = [];
@@ -44,18 +48,18 @@ export default class GameScene extends Phaser.Scene {
 
     create() {
         this.debug = this.add.graphics();
+        //this.debug.setDepth(100000);
 
         this.visibilityGraphics = this.add.graphics();
+        this.visibilityGraphics.setVisible(false);
 
         this.backgroundImg = this.add.image(0,0,"backgroundImg");
         this.backgroundImg.setOrigin(0,0);
         this.backgroundImg.setScale(10);
         this.backgroundImg.setDepth(-100);
 
-        this.shadows = this.add.image(0, 0, "shadowImg");
-        this.shadows.setScale(CONFIG.width, CONFIG.height);
-        this.shadows.setDepth(100);
-        this.shadows.setAlpha(0.65);
+        this.shadows = new Shadows(this);
+        this.minimap = new Minimap(this, 0.1);
 
         this.#handleSocket();
 
@@ -91,7 +95,13 @@ export default class GameScene extends Phaser.Scene {
         const sharedState = store.getState();
         const keyStates = keyHandler.keyStates;
 
-        const zooming = sharedState.settings.alwaysZooming || sharedState.settings.toggledZoom? this.zoomToggled : keyStates.has("zoom");
+        //if (keyStates.has("debugTest")) this.#players.main.setPosition(1000, 500);
+        //else this.#players.main.setPosition(0, 500);
+        //console.log({player: this.#players.main.x, camera: this.cameras.main.worldView.centerX});
+
+        //console.log(this.cameras.main.scrollX)
+
+        const zooming = sharedState.settings.alwaysZooming || (sharedState.settings.toggledZoom? this.zoomToggled : keyStates.has("zoom"));
 
         const mouseAngle = Phaser.Math.Angle.Between(
             CONFIG.width / 2,
@@ -106,7 +116,12 @@ export default class GameScene extends Phaser.Scene {
 
         this.cameras.main.setFollowOffset(-offsetX, -offsetY);
         
-        this.drawShadows(offsetX, offsetY, sharedState.settings.zoomedViewCone && this.zoomDist > 0, this.#players.main.rotation);
+        //this.debug.fillStyle(0x00ff00, 1);
+        //this.debug.fillPoint(this.#players.main.x + offsetX, this.#players.main.y + offsetY, 5);
+        //this.debug.fillStyle(0x0000ff, 1);
+        //this.debug.fillPoint(this.cameras.main.worldView.centerX, this.cameras.main.worldView.centerY, 5);
+        
+        this.drawShadows(sharedState.settings.zoomedViewCone && this.zoomDist > 0, this.#players.main.rotation);
     
         this.displayWalls();
 
@@ -200,11 +215,11 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
-    drawShadows(offsetX, offsetY, restrictFOV, angle) {
-        const viewTop = this.#players.main.y - CONFIG.height/2 + offsetY;
-        const viewLeft = this.#players.main.x - CONFIG.width/2 + offsetX;
-        const viewBottom = this.#players.main.y + CONFIG.height/2 + offsetY;
-        const viewRight = this.#players.main.x + CONFIG.width/2 + offsetX;
+    drawShadows(restrictFOV, angle) {
+        const viewTop = this.cameras.main.worldView.top - 10;//this.#players.main.y - CONFIG.height/2 + offsetY;
+        const viewLeft = this.cameras.main.worldView.left - 10;//this.#players.main.x - CONFIG.width/2 + offsetX;
+        const viewBottom = this.cameras.main.worldView.bottom + 10;//this.#players.main.y + CONFIG.height/2 + offsetY;
+        const viewRight = this.cameras.main.worldView.right + 10;//this.#players.main.x + CONFIG.width/2 + offsetX;
 
         let walls = this.unintersectingWalls;
 
@@ -265,7 +280,6 @@ export default class GameScene extends Phaser.Scene {
         this.shadowsVisibilityMask = this.visibilityGraphics.createGeometryMask();
         this.shadowsVisibilityMask.setInvertAlpha();
 
-        this.shadows.setPosition(this.#players.main.x + offsetX, this.#players.main.y - offsetY);
         this.shadows.setMask(this.shadowsVisibilityMask);
     }
 }

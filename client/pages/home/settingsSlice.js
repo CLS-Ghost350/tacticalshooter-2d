@@ -13,7 +13,8 @@ const initialState = {
         "moveRight": "KeyD",
         "drawBow": "MouseRight",
         //"hit": "MouseLeft",
-        "zoom": "ShiftLeft"
+        "zoom": "ShiftLeft",
+        "debugTest": "KeyP"
     }
 }
 
