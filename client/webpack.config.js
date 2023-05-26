@@ -14,6 +14,7 @@ module.exports = {
 
     entry: {
         "home": "./pages/home/index.jsx",
+        "match": "./pages/match/index.jsx",
     },
 
     output: {

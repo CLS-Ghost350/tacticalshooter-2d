@@ -1,15 +1,16 @@
 import React from "react";
 import { useState, useEffect } from "react";
 
-import styles from "@/styles/home.module.css"
-
-import SettingsMenu from "./SettingsMenu.jsx";
+import Home from "./Home.jsx";
+import HostMatch from "./HostMatch.jsx"
 
 export default function Main(props) {
-    const [ settingsOpen, setSettingsOpen ] = useState(false);
+    const [ appState, setAppState ] = useState("home")
 
-    return <>
-        <img className={styles.settingsIcon} src="/assets/settingsIcon.png" onClick={ () => setSettingsOpen(!settingsOpen) }/>
-        <SettingsMenu open={settingsOpen} close={ () => setSettingsOpen(false) }/>
-    </>
+    switch (appState) {
+        case "home":
+            return <Home setAppState={setAppState}/>
+        case "hostMatch":
+            return <HostMatch setAppState={setAppState}/>
+    }
 }

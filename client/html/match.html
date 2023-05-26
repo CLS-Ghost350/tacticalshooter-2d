@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <title>Bow Game</title>
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #gameArea {
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: -100;
+            cursor: crosshair;
+        }
+
+        #root {
+            height: 100%;
+            width: 100%;
+        }
+
+        * {
+            font-family: sans-serif;
+        }
+    </style>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+</head>
+
+<body>
+    <div id="gameArea"></div>
+    <div id="root"></div>
+
+    <script src="/bundles/match-bundle.js"></script>
+</body>
+
+</html>

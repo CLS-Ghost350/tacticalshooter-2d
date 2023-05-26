@@ -1,4 +1,5 @@
 const GameObject = require("./GameObject");
+const Arrow = require("./Arrow.js");
 const util = require("../shared/util");
 const collisions = require("../shared/collisions");
 
@@ -26,24 +27,25 @@ module.exports = class Player extends GameObject {
 
     bowDrawStatus = 0;
 
-    constructor(game,id,connection) {
-        super();
+    constructor(match, connection, id) {
+        super(match);
+
         this.ID = id;
-        this.game = game;
+        this.match = match;
         this.connection = connection;
 
-        this.game.io.emit("player", { x: 0, y: 0, angle: 0, id: this.ID});
+        this.match.namespace.emit("player", { x: 0, y: 0, angle: 0, id: this.ID});
     }
 
     update(deltaTime) {
-        const deltaTimeMul = deltaTime/1000 * this.game.CORRECT_TPS;
+        const deltaTimeMul = deltaTime/1000 * this.match.CORRECT_TPS;
 
         this.updateVelocity(deltaTimeMul);
         this.moveCollideWalls(deltaTimeMul);
         this.updateRotation(deltaTimeMul);
         this.updateBow();
 
-        this.game.io.emit("player",{
+        this.match.namespace.emit("player",{
             x: this.position.x,
             y: this.position.y,
             angle: this.angle,
@@ -53,14 +55,14 @@ module.exports = class Player extends GameObject {
 
     updateBow() {
         if (this.connection.keyStates.includes("drawBow")) { // holding shoot button (right-click)
-            if (this.bowDrawStatus == 0) this.game.io.emit("bowDraw",{ playerID: this.ID }) // start drawing
+            if (this.bowDrawStatus == 0) this.match.namespace.emit("bowDraw",{ playerID: this.ID }) // start drawing
             if (this.bowDrawStatus < this.BOW_DRAW_TIME) this.bowDrawStatus += 1; // increase time drawn
         } else if (this.bowDrawStatus > 0) {
             if (this.bowDrawStatus == this.BOW_DRAW_TIME) {
-                const arrow = this.game.createArrow(this.game, this.position.x, this.position.y, this.angle, this.ID)
+                const arrow = new Arrow(this.match, this.position.x, this.position.y, this.angle, this.ID)
             }
 
-            this.game.io.emit("bowDrawStop",{ playerID: this.ID });
+            this.match.namespace.emit("bowDrawStop",{ playerID: this.ID });
             this.bowDrawStatus = 0;
         }
     }
@@ -121,7 +123,7 @@ module.exports = class Player extends GameObject {
         let minMoveX = Math.abs(moveX);
         let minMoveY = Math.abs(moveY);
 
-        for (const wall of this.game.walls) {
+        for (const wall of this.match.walls) {
             const { x: x1, y: y1 } = wall.start;
             const { x: x2, y: y2 } = wall.end;
 
@@ -185,7 +187,7 @@ module.exports = class Player extends GameObject {
 
     kill() {
         this.connection.destroy();
-        this.destroy();
+        this.match.removeGameObject(this);
     }
 }
 

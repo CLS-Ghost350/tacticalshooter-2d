@@ -20,8 +20,8 @@ module.exports = class Arrow extends GameObject {
     get FRICTION_MUL() { return 0.95; }
     get FRICTION_SUB() { return 1; }
 
-    constructor(game,x,y,angle,team) {
-        super()
+    constructor(match, x, y, angle, team) {
+        super(match)
 
         this.position.x = x;
         this.position.y = y;
@@ -29,7 +29,7 @@ module.exports = class Arrow extends GameObject {
         this.id = Arrow.id;
         Arrow.id++;
 
-        this.game = game;
+        this.match = match;
         this.#velocity = this.STARTING_VEL;
         this.team = team;
 
@@ -46,7 +46,7 @@ module.exports = class Arrow extends GameObject {
         } else {
             this.updatePosition(TIME_SINCE);
 
-            this.game.io.emit("arrow",{ 
+            this.match.namespace.emit("arrow",{ 
                 id: this.id, 
                 x: this.position.x, 
                 y: this.position.y, 
@@ -88,7 +88,7 @@ module.exports = class Arrow extends GameObject {
     checkCollisions(newX, newY) {
         let closestColl = null;
 
-        for (const wall of this.game.walls) {
+        for (const wall of this.match.walls) {
             const collPoint = collisions.lineLine(
                 this.position.x, this.position.y,
                 newX, newY,
@@ -105,7 +105,7 @@ module.exports = class Arrow extends GameObject {
                 closestColl = { dx, dy, x: collPoint[0], y: collPoint[1], object: wall };
         }
 
-        for (const conn of Object.values(this.game.connections)) {
+        for (const conn of Object.values(this.match.connections)) {
             if (!conn.player) continue;
             const player = conn.player;
             if (player.ID == this.team) continue;
@@ -131,7 +131,7 @@ module.exports = class Arrow extends GameObject {
     }
 
     destroy() {
-        super.destroy();
-        this.game.io.emit("arrowDestory",{ id: this.id });
+        this.match.namespace.emit("arrowDestory",{ id: this.id });
+        this.match.removeGameObject(this);
     }
 }

@@ -7,6 +7,7 @@ const Player = require("./Player.js");
 // export Connection class
 module.exports = class Connection {
     #socket;
+    get socket() { return this.#socket; }
 
     #keyStates = [];
     #targetAngle = 0;
@@ -17,10 +18,10 @@ module.exports = class Connection {
     // constants
     get ID() { return this.#socket.id; }
     
-    constructor(game,socket) {
+    constructor(match, socket) {
         console.info({ "PLAYER CONNECTED": { id: socket.id } });
 
-        this.game = game;
+        this.match = match;
         this.#socket = socket;
 
         // add event listeners
@@ -33,9 +34,9 @@ module.exports = class Connection {
         });
 
         this.#socket.on("joinGame",msg => {
-            console.info({ "PLAYER JOINED GAME": { id: this.ID } });
+            console.info({ "PLAYER JOINED MATCH": { id: this.ID } });
 
-            this.player = new Player(this.game,this.ID,this);
+            this.player = new Player(this.match, this, this.ID);
         })
 
         this.#socket.on("updateData",msg => {
@@ -50,10 +51,10 @@ module.exports = class Connection {
 
     destroy() {
         console.info({ "PLAYER DISCONNECTED": { id: this.ID } });
-        this.game.io.emit("playerLeft",{ id: this.ID });
+        this.match.namespace.emit("playerLeft",{ id: this.ID });
         
         if (this.player) this.player.destroy();
-        delete this.game.connections[this.ID];
+        delete this.match.connections[this.ID];
 
         this.#socket.removeAllListeners(); 
     }

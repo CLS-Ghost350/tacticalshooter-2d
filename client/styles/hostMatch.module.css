@@ -1,0 +1,24 @@
+.outerDiv {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 3px 5px grey;
+    padding: 20px;
+    border-radius: 5px;
+}
+
+.input {
+    width: 96%;
+    margin-bottom: 15px;
+}
+
+.label {
+    margin: 0;
+}

@@ -11,31 +11,19 @@
             padding: 0;
         }
 
-        #gameArea {
-            position: fixed;
-            left: 0;
-            top: 0;
-            z-index: -100;
-            cursor: crosshair;
-        }
-
-        #root {
-            height: 100%;
+        #uiArea {
+            position:absolute;
+            margin:0;
+            padding:0;
             width: 100%;
-        }
-
-        * {
-            font-family: sans-serif;
+            height: 100%;
         }
     </style>
-
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 </head>
 
 <body>
+    <div id="uiArea"></div>
     <div id="gameArea"></div>
-    <div id="root"></div>
 
     <script src="/bundles/home-bundle.js"></script>
 </body>
