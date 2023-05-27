@@ -49,7 +49,8 @@ module.exports = class Player extends GameObject {
             x: this.position.x,
             y: this.position.y,
             angle: this.angle,
-            id: this.ID
+            id: this.ID,
+            team: this.connection.team
         });
     }
 
@@ -59,7 +60,7 @@ module.exports = class Player extends GameObject {
             if (this.bowDrawStatus < this.BOW_DRAW_TIME) this.bowDrawStatus += 1; // increase time drawn
         } else if (this.bowDrawStatus > 0) {
             if (this.bowDrawStatus == this.BOW_DRAW_TIME) {
-                const arrow = new Arrow(this.match, this.position.x, this.position.y, this.angle, this.ID)
+                const arrow = new Arrow(this.match, this.position.x, this.position.y, this.angle, this.connection.team)
             }
 
             this.match.namespace.emit("bowDrawStop",{ playerID: this.ID });

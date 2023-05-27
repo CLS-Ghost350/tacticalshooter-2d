@@ -45,14 +45,16 @@ module.exports = class Arrow extends GameObject {
             if (this.#despawnTimer < 0) this.destroy();
         } else {
             this.updatePosition(TIME_SINCE);
-
-            this.match.namespace.emit("arrow",{ 
-                id: this.id, 
-                x: this.position.x, 
-                y: this.position.y, 
-                angle: this.angle
-            })
         }
+
+        // arrows not being deleted
+
+        this.match.namespace.emit("arrow",{ 
+            id: this.id, 
+            x: this.position.x, 
+            y: this.position.y, 
+            angle: this.angle
+        });
     }
 
     updatePosition(TIME_SINCE) {
@@ -63,12 +65,16 @@ module.exports = class Arrow extends GameObject {
         const coll = this.checkCollisions(newX, newY);
 
         if (coll) {
-            this.#velocity = 0;
+            //console.log(coll)
+
             this.position.x = coll.x;
             this.position.y = coll.y;
 
-            if (coll.object instanceof Player && coll.object.ID != this.team) {
+            if (coll.isPlayer) {
                 coll.object.kill();
+                this.#velocity /= 8;
+            } else {
+                this.#velocity = 0;
             }
 
         } else {
@@ -107,8 +113,9 @@ module.exports = class Arrow extends GameObject {
 
         for (const conn of Object.values(this.match.connections)) {
             if (!conn.player) continue;
+            if (conn.team == this.team) continue;
+
             const player = conn.player;
-            if (player.ID == this.team) continue;
 
             const collPoint = collisions.lineCircle(
                 this.position.x, this.position.y, newX, newY,
@@ -124,7 +131,7 @@ module.exports = class Arrow extends GameObject {
             const dy = Math.abs(this.position.y - collY);
 
             if (!closestColl || dx < closestColl.dx || dy < closestColl.dy) 
-                closestColl = { dx, dy, x: collX, y: collY, object: player };
+                closestColl = { dx, dy, x: collX, y: collY, object: player, isPlayer: true };
         }
 
         return closestColl;

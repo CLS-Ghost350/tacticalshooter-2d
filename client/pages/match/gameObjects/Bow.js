@@ -18,7 +18,7 @@ export default class Bow extends Phaser.GameObjects.Sprite {
             key: "bowAnimation",
             frames: this.game.anims.generateFrameNumbers("bowSpritesheet"),
             frameRate: this.FRAME_RATE,
-        });
+        }); // anim alr exists
     }
 
     preUpdate(time,delta) {

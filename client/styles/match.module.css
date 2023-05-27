@@ -90,6 +90,48 @@
     color: white;
 }
 
+.scoreboardOuter {
+    position: fixed;
+    top: 0vh;
+    left: 0vw;
+    width: 130.5vh;
+    height: 83vh;
+    padding-top: 15vh;
+    display: flex;
+    justify-content: center;
+    background-color: rgba(0,0,0,0);
+}
+
+.scoreboardTeamsContainer {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    height: fit-content;
+}
+
+.scoreboardTeamOuter {
+    flex-grow: 1;
+    position: relative;
+    padding: 100px;
+    background-color: black;
+}
+
+.scoreboardDiv {
+    background-color: white;
+    width: 70vh;
+    height: 70vh;
+}
+
+.scoreboardTeamHeading {
+    color: aliceblue;
+}
+
+.scoreboardHeader {
+    background-color: antiquewhite;
+    padding: 10px;
+    text-align: center;
+}
+
 .hidden {
     visibility: hidden !important;
 }

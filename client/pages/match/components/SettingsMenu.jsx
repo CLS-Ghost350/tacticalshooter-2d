@@ -14,7 +14,7 @@ const PAGES = {
 export default function SettingsMenu(props) {
     const [ page, setPage ] = useState("Keybinds");
 
-    return <div className={`${styles.settingsMenuOuter} ${props.open? "" : styles.hidden}`}>
+    return <div className={`${styles.settingsMenuOuter}`}> {/* move this to main.jsx? */}
         <div className={styles.settingsMenuDiv}>
             <nav className={styles.settingsNav}>
                 { Object.keys(PAGES).map(name => 

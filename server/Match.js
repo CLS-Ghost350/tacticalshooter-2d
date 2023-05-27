@@ -21,6 +21,8 @@ module.exports = class Match {
     walls = [];
     gameObjects = [];
 
+    teams = { red: [], blue: [] }
+
     #time = 0;
     #_stopGameLoop = false;
     #_realTPSCounter = 0;
@@ -50,14 +52,14 @@ module.exports = class Match {
          // walls end
  
          this.#startGameLoop();
-         this.countTPS(); //fix tps too low
+         //this.countTPS(); //fix tps too low
 
         this.createEmptyTimeout();
     }
 
     createEmptyTimeout() {
         this.emptyTimeout = setTimeout(() => {
-            if (Object.keys(this.namespace.sockets).length == 0) {
+            if (this.connections.length == 0) {
                 this.server.deleteMatch(this.ID);
             }
         }, 30000)
@@ -67,10 +69,12 @@ module.exports = class Match {
         this.gameObjects.push(gameObject);
     }
 
-    removeGameObject() {
-        this.gameObjects = this.gameObjects.filter(item => item !== this);
+    removeGameObject(gameObject) {
+        this.gameObjects = this.gameObjects.filter(item => item !== gameObject);
         // slow? use set?
     }
+
+    addToTeam(connection, team) {}
 
     #update = DELTA_TIME => {
         //GameObject.testCollisions()

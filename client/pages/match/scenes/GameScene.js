@@ -77,8 +77,6 @@ export default class GameScene extends Phaser.Scene {
         })
 
         keyHandler.onInputDown("zoom", () => this.zoomToggled = !this.zoomToggled);
-
-        socket.emit("joinGame");
     }
 
     update(time,delta) {
@@ -149,15 +147,19 @@ export default class GameScene extends Phaser.Scene {
 
             if (!player) {
                 console.info({ "PLAYER JOINED": msg });
-                this.#players[msg.id] = new Player(this,msg.x,msg.y,msg.angle,msg.id == socket.id);
+                this.#players[msg.id] = new Player(this,msg.x,msg.y,msg.angle,msg.id == socket.id, msg.team);
             } else {
                 player.setPosition(msg.x,msg.y);
                 //console.log(msg.x + " " + msg.y);
                 player.angle = msg.angle;
+                player.team = msg.team;
             }
         });
 
         socket.on("playerLeft", msg => {
+            if (!this.#players[msg.id])
+                return console.warn({ "LEFT PLAYER DOES NOT EXIST": msg.id });
+
             console.info({ "PLAYER LEFT": msg });
             if (this.#players[msg.id].mainPlayer) {
                 setTimeout(() => window.location.reload(), 2000);
@@ -187,6 +189,9 @@ export default class GameScene extends Phaser.Scene {
         });
 
         socket.on("arrowDestory",msg => setTimeout(() => {
+            if (!this.#arrows[msg.id])
+                return console.warn({ "TO DESTROY ARROW DOES NOT EXIST": msg.id });
+
             this.#arrows[msg.id].destroy();
             delete this.#arrows[msg.id];
         }),100)

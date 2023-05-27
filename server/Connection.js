@@ -17,6 +17,8 @@ module.exports = class Connection {
 
     // constants
     get ID() { return this.#socket.id; }
+
+    team = null;
     
     constructor(match, socket) {
         console.info({ "PLAYER CONNECTED": { id: socket.id } });
@@ -33,8 +35,12 @@ module.exports = class Connection {
             this.destroy();
         });
 
-        this.#socket.on("joinGame",msg => {
-            console.info({ "PLAYER JOINED MATCH": { id: this.ID } });
+        this.#socket.on("joinTeam", ({ team }) => {
+            this.team = team;
+        });
+
+        this.#socket.on("respawn",msg => {
+            console.info({ "PLAYER RESPAWNED": { id: this.ID } });
 
             this.player = new Player(this.match, this, this.ID);
         })
@@ -53,7 +59,7 @@ module.exports = class Connection {
         console.info({ "PLAYER DISCONNECTED": { id: this.ID } });
         this.match.namespace.emit("playerLeft",{ id: this.ID });
         
-        if (this.player) this.player.destroy();
+        if (this.player) this.match.removeGameObject(this.player);
         delete this.match.connections[this.ID];
 
         this.#socket.removeAllListeners(); 
