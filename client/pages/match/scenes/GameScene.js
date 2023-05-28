@@ -33,7 +33,7 @@ export default class GameScene extends Phaser.Scene {
     ZOOM_SCALE = CONFIG.width/2 * 0.6;
     heightWidthRatio = CONFIG.height / CONFIG.width;
     ZOOM_SPEED = 0.25;
-    ZOOMED_FOV = 0.4;
+    ZOOMED_FOV = 0.6;
     zoomDist = 0;
 
     zoomToggled = false;
@@ -101,7 +101,7 @@ export default class GameScene extends Phaser.Scene {
 
         const zooming = sharedState.settings.alwaysZooming || (sharedState.settings.toggledZoom? this.zoomToggled : keyStates.has("zoom"));
 
-        const mouseAngle = Phaser.Math.Angle.Between(
+        this.mouseAngle = Phaser.Math.Angle.Between(
             CONFIG.width / 2,
             CONFIG.height / 2,
             this.input.activePointer.x,
@@ -109,8 +109,7 @@ export default class GameScene extends Phaser.Scene {
         );
 
         this.updateZoomDist(zooming, sharedState.settings.zoomCurve? this.zoomCurve : this.zoomCurveLinear);
-        const offsetX = Math.cos(mouseAngle) * this.zoomDist * this.ZOOM_SCALE;
-        const offsetY = Math.sin(mouseAngle) * this.zoomDist * this.heightWidthRatio * this.ZOOM_SCALE;
+        const [ offsetX, offsetY] = this.calcZoomOffset(this.zoomDist, this.mouseAngle);
 
         this.cameras.main.setFollowOffset(-offsetX, -offsetY);
         
@@ -123,17 +122,10 @@ export default class GameScene extends Phaser.Scene {
     
         this.displayWalls();
 
-        const targetAngle = Phaser.Math.Angle.Between(
-            CONFIG.width/2 - offsetX,
-            CONFIG.height/2 - offsetY,
-            this.input.activePointer.x,
-            this.input.activePointer.y
-        );
-
         socket.emit("updateData",{ 
-            targetAngle: Phaser.Math.RadToDeg(targetAngle),
+            targetAngle: Phaser.Math.RadToDeg(this.mouseAngle),
             keyStates: Array.from(keyStates),
-            zoom: this.zoomDist
+            zoomDist: this.zoomDist
         });
 
     }
@@ -153,6 +145,7 @@ export default class GameScene extends Phaser.Scene {
                 //console.log(msg.x + " " + msg.y);
                 player.angle = msg.angle;
                 player.team = msg.team;
+                player.zoomDist = msg.zoomDist;
             }
         });
 
@@ -212,6 +205,13 @@ export default class GameScene extends Phaser.Scene {
         else this.zoomDist += Math.sign(dz) * this.ZOOM_SPEED;
     }
 
+    calcZoomOffset(zoomDist, angle) {
+        return [ 
+            Math.cos(angle) * zoomDist * this.ZOOM_SCALE,
+            Math.sin(angle) * zoomDist * this.heightWidthRatio * this.ZOOM_SCALE 
+        ];
+    }
+
     displayWalls() {
         this.debug.lineStyle(2,"0xfc0303",1);
 
@@ -221,53 +221,61 @@ export default class GameScene extends Phaser.Scene {
     }
 
     drawShadows(restrictFOV, angle) {
-        const viewTop = this.cameras.main.worldView.top - 10;//this.#players.main.y - CONFIG.height/2 + offsetY;
-        const viewLeft = this.cameras.main.worldView.left - 10;//this.#players.main.x - CONFIG.width/2 + offsetX;
-        const viewBottom = this.cameras.main.worldView.bottom + 10;//this.#players.main.y + CONFIG.height/2 + offsetY;
-        const viewRight = this.cameras.main.worldView.right + 10;//this.#players.main.x + CONFIG.width/2 + offsetX;
-
-        let walls = this.unintersectingWalls;
-
-        if (restrictFOV) { // restricted visibility cone disabled
-            const cwAngle = angle + this.ZOOMED_FOV;
-            const ccwAngle = angle - this.ZOOMED_FOV;
-
-            walls = VisibilityPolygon.breakIntersections([ ...this.unintersectingWalls, 
-                [ 
-                    [ this.#players.main.x - Math.cos(angle), 
-                        this.#players.main.y - Math.sin(angle) ], 
-
-                    [ this.#players.main.x + Math.cos(cwAngle)*10000, 
-                        this.#players.main.y + Math.sin(cwAngle)*10000 ] 
-                ],
-                [ 
-                    [ this.#players.main.x - Math.cos(angle),
-                        this.#players.main.y - Math.sin(angle) ], 
-
-                    [ this.#players.main.x + Math.cos(ccwAngle)*10000, 
-                        this.#players.main.y + Math.sin(ccwAngle)*10000 ] 
-                ] 
-            ]);
-        }
-
-        const visibilityPolygon = VisibilityPolygon.computeViewport(
-            [this.#players.main.x, this.#players.main.y], 
-            walls,
-            [viewLeft, viewTop], 
-            [viewRight,viewBottom], 
-        ); // does not duplicate starting point
-        
-        const start = visibilityPolygon[0];
-        const end = visibilityPolygon[visibilityPolygon.length - 1];
-
         this.visibilityGraphics.fillStyle(0xff0000);
         this.visibilityGraphics.clear();
-        this.visibilityGraphics.moveTo(end);
-        this.visibilityGraphics.beginPath();
-        for (const point of visibilityPolygon)
-            this.visibilityGraphics.lineTo(...point);
-        this.visibilityGraphics.closePath();
-        this.visibilityGraphics.fillPath();
+
+        for (const player of Object.values(this.#players)) {
+            if (player.team != this.#players.main.team)
+                continue;
+
+            let offsetX, offsetY;
+
+            if (player.mainPlayer)
+                [ offsetX, offsetY ] = this.calcZoomOffset(this.zoomDist, this.mouseAngle);
+            else
+                [ offsetX, offsetY ] = this.calcZoomOffset(player.zoomDist, player.rotation);
+
+            const viewTop = player.y - CONFIG.height/2 + offsetY;
+            const viewLeft = player.x - CONFIG.width/2 + offsetX;
+            const viewBottom = player.y + CONFIG.height/2 + offsetY;
+            const viewRight = player.x + CONFIG.width/2 + offsetX;
+
+            let walls = this.unintersectingWalls;
+
+            if (restrictFOV) { // restricted visibility cone disabled
+                const cwAngle = angle + this.ZOOMED_FOV;
+                const ccwAngle = angle - this.ZOOMED_FOV;
+
+                walls = VisibilityPolygon.breakIntersections([ ...this.unintersectingWalls, 
+                    [ 
+                        [ player.x - Math.cos(angle), player.y - Math.sin(angle) ], 
+                        [ player.x + Math.cos(cwAngle)*10000, player.y + Math.sin(cwAngle)*10000 ] 
+                    ],
+                    [ 
+                        [ player.x - Math.cos(angle), player.y - Math.sin(angle) ], 
+                        [ player.x + Math.cos(ccwAngle)*10000, player.y + Math.sin(ccwAngle)*10000 ] 
+                    ] 
+                ]);
+            }
+
+            const visibilityPolygon = VisibilityPolygon.computeViewport(
+                [player.x, player.y], 
+                walls,
+                [viewLeft, viewTop], 
+                [viewRight,viewBottom], 
+            ); // does not duplicate starting point
+            
+            const start = visibilityPolygon[0];
+            const end = visibilityPolygon[visibilityPolygon.length - 1];
+
+            this.visibilityGraphics.moveTo(end);
+            this.visibilityGraphics.beginPath();
+            for (const point of visibilityPolygon)
+                this.visibilityGraphics.lineTo(...point);
+            this.visibilityGraphics.closePath();
+            this.visibilityGraphics.fillPath();
+        }
+
         //if (this.visibilityMask) this.visibilityMask.destroy();
         this.visibilityMask = this.visibilityGraphics.createGeometryMask();
 

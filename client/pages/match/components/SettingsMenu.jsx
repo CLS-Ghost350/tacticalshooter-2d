@@ -83,17 +83,19 @@ function KeybindsTab(props) {
 }
 
 function DevTab(props) {
+    const settings = useSelector(state => state.settings);
+
     const dispatch = useDispatch();
     const dispatchCheckbox = (key, e) => dispatch(setSetting({ key, value: e.target.checked }));
 
     return <>
         <li className={styles.settingsOption}>
-            <input type={"checkbox"} onChange={e => dispatchCheckbox("zoomedViewCone", e)}/> Zoomed View Cone (WIP)</li>
+            <input type={"checkbox"} checked={settings.zoomedViewCone} onChange={e => dispatchCheckbox("zoomedViewCone", e)}/> Zoomed View Cone (WIP)</li>
         <li className={styles.settingsOption}>
-            <input type={"checkbox"} onChange={e => dispatchCheckbox("zoomCurve", e)}/> Zoom Curve</li>
+            <input type={"checkbox"} checked={settings.zoomCurve} onChange={e => dispatchCheckbox("zoomCurve", e)}/> Zoom Curve</li>
         <li className={styles.settingsOption}>
-            <input type={"checkbox"} onChange={e => dispatchCheckbox("toggledZoom", e )}/> Toggled Zoom</li>
+            <input type={"checkbox"} checked={settings.toggledZoom} onChange={e => dispatchCheckbox("toggledZoom", e )}/> Toggled Zoom</li>
         <li className={styles.settingsOption}>
-            <input type={"checkbox"} onChange={e => dispatchCheckbox("alwaysZooming", e )}/> Always Zooming</li>
+            <input type={"checkbox"} checked={settings.alwaysZooming} onChange={e => dispatchCheckbox("alwaysZooming", e )}/> Always Zooming</li>
     </>;
 }

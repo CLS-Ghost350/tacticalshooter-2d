@@ -50,7 +50,8 @@ module.exports = class Player extends GameObject {
             y: this.position.y,
             angle: this.angle,
             id: this.ID,
-            team: this.connection.team
+            team: this.connection.team,
+            zoomDist: this.connection.zoomDist
         });
     }
 

@@ -19,6 +19,7 @@ module.exports = class Connection {
     get ID() { return this.#socket.id; }
 
     team = null;
+    zoomDist = 0;
     
     constructor(match, socket) {
         console.info({ "PLAYER CONNECTED": { id: socket.id } });
@@ -48,6 +49,7 @@ module.exports = class Connection {
         this.#socket.on("updateData",msg => {
             if (!this.player) return this.destroy();
             if (!isNaN(msg.targetAngle)) this.#targetAngle = msg.targetAngle;
+            if (!isNaN(msg.zoomDist)) this.zoomDist = msg.zoomDist;
             if (msg.keyStates instanceof Array) this.#keyStates = msg.keyStates;
         });
     }

@@ -3,6 +3,7 @@ import util from "@shared/util";
 import Bow from "./Bow.js";
 
 export default class Player extends Phaser.GameObjects.Image {
+    zoomDist = 0;
 
     constructor(game,x,y,angle,mainPlayer, team) {
         super(game,x,y,"playerImg");
