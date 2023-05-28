@@ -11,7 +11,7 @@ module.exports = class Arrow extends GameObject {
     angle;
     #velocity = 70;
 
-    #despawnTimer = 300;
+    #despawnTimer = 1000;
 
     #cosAngle;
     #sinAngle;
@@ -19,6 +19,8 @@ module.exports = class Arrow extends GameObject {
     get STARTING_VEL() { return 200; }
     get FRICTION_MUL() { return 0.95; }
     get FRICTION_SUB() { return 1; }
+    get AIR_DESPAWN_TIME() { return 10; }
+    get HIT_WALL_DESPAWN_TIME() { return 300; }
 
     constructor(match, x, y, angle, team) {
         super(match)
@@ -42,12 +44,12 @@ module.exports = class Arrow extends GameObject {
     update(TIME_SINCE) {
         if (this.#velocity == 0) {
             this.#despawnTimer--;
-            if (this.#despawnTimer < 0) this.destroy();
+
+            if (this.#despawnTimer < 0) 
+                return this.destroy();
         } else {
             this.updatePosition(TIME_SINCE);
         }
-
-        // arrows not being deleted
 
         this.match.namespace.emit("arrow",{ 
             id: this.id, 
@@ -73,8 +75,10 @@ module.exports = class Arrow extends GameObject {
             if (coll.isPlayer) {
                 coll.object.kill();
                 this.#velocity /= 8;
+                this.#despawnTimer = this.AIR_DESPAWN_TIME;
             } else {
                 this.#velocity = 0;
+                this.#despawnTimer = this.HIT_WALL_DESPAWN_TIME;
             }
 
         } else {
