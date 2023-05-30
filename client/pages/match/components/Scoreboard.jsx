@@ -8,7 +8,7 @@ import socket from "../socket";
 import { useSelector, useDispatch } from 'react-redux';
 import { setGameState } from '../gameSlice';
 
-export default function Scoreboard({ close }) {
+export default function Scoreboard({ open, close }) {
     const dispatch = useDispatch();
 
     const join = team => {
@@ -18,21 +18,19 @@ export default function Scoreboard({ close }) {
         close();
     }
 
-    return <div className={styles.scoreboardOuter}>
-        <div className={styles.scoreboardDiv}>
-            <header className={styles.scoreboardHeader}>AAA</header>
+    return <dialog open={open} className={styles.scoreboard}> 
+        <header className={styles.scoreboardHeader}>AAA</header>
 
-            <div className={styles.scoreboardTeamsContainer}>
-                <div className={styles.scoreboardTeamOuter}>
-                    <h1 className={styles.scoreboardTeamHeading}>Team A</h1>
-                    <button type="button" onClick={() => join("a")}>Join Team A</button>
-                </div>
+        <div className={styles.scoreboardTeamsContainer}>
+            <div className={styles.scoreboardTeamOuter}>
+                <h1 className={styles.scoreboardTeamHeading}>Team A</h1>
+                <button type="button" onClick={() => join("a")}>Join Team A</button>
+            </div>
 
-                <div className={styles.scoreboardTeamOuter}>
-                    <h1 className={styles.scoreboardTeamHeading}>Team B</h1>
-                    <button type="button" onClick={() => join("b")}>Join Team B</button>
-                </div>
+            <div className={styles.scoreboardTeamOuter}>
+                <h1 className={styles.scoreboardTeamHeading}>Team B</h1>
+                <button type="button" onClick={() => join("b")}>Join Team B</button>
             </div>
         </div>
-    </div>
+    </dialog>;
 }

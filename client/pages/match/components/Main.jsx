@@ -27,7 +27,7 @@ export default function Main(props) {
 
     return <>
         <img className={styles.settingsIcon} src="/assets/settingsIcon.png" onClick={ () => setSettingsOpen(!settingsOpen) }/>
-        { settingsOpen? <SettingsMenu open={settingsOpen} close={ () => setSettingsOpen(false) }/> : null }
-        { scoreboardOpen? <Scoreboard open={scoreboardOpen} close={ () => setScoreboardOpen(false) }/> : null }
+        <SettingsMenu open={settingsOpen} close={ () => setSettingsOpen(false) }/>
+        <Scoreboard open={scoreboardOpen} close={ () => setScoreboardOpen(false) }/>
     </>
 }

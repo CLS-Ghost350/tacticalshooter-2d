@@ -11,23 +11,21 @@ const PAGES = {
     "Dev": <DevTab/>
 };
 
-export default function SettingsMenu(props) {
+export default function SettingsMenu({ open, close }) {
     const [ page, setPage ] = useState("Keybinds");
 
-    return <div className={`${styles.settingsMenuOuter}`}> {/* move this to main.jsx? */}
-        <div className={styles.settingsMenuDiv}>
-            <nav className={styles.settingsNav}>
-                { Object.keys(PAGES).map(name => 
-                    <div key={name} 
-                        className={`${styles.settingsNavTab} ${name == page? styles.settingsNavTabSelected : ""}`} 
-                        onClick={() => setPage(name)}>
-                            <h1>{name}</h1>
-                    </div>) }
-            </nav>
-            
-            <ul className={styles.settingsContent}>{ PAGES[page] }</ul>
-        </div>
-    </div>
+    return <dialog open={open} className={styles.settingsMenu}> 
+        <nav className={styles.settingsNav}>
+            { Object.keys(PAGES).map(name => 
+                <div key={name} 
+                    className={`${styles.settingsNavTab} ${name == page? styles.settingsNavTabSelected : ""}`} 
+                    onClick={() => setPage(name)}>
+                        <h1>{name}</h1>
+                </div>) }
+        </nav>
+        
+        <ul className={styles.settingsContent}>{ PAGES[page] }</ul>
+    </dialog>
 }
 
 const MOUSE_BUTTONS = ["MouseLeft", "MouseMiddle", "MouseRight"];
