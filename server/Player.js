@@ -27,6 +27,8 @@ module.exports = class Player extends GameObject {
 
     bowDrawStatus = 0;
 
+    alive = true;
+
     constructor(match, connection, id) {
         super(match);
 
@@ -34,7 +36,7 @@ module.exports = class Player extends GameObject {
         this.match = match;
         this.connection = connection;
 
-        this.match.namespace.emit("player", { x: 0, y: 0, angle: 0, id: this.ID});
+        //this.match.namespace.emit("player", { x: 0, y: 0, angle: 0, id: this.ID});
     }
 
     update(deltaTime) {
@@ -188,8 +190,10 @@ module.exports = class Player extends GameObject {
     }
 
     kill() {
-        this.connection.destroy();
+        //this.connection.destroy();
         this.match.removeGameObject(this);
+        this.alive = false;
+        this.connection.killPlayer();
     }
 }
 

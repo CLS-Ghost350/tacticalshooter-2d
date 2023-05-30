@@ -80,54 +80,48 @@ export default class GameScene extends Phaser.Scene {
     }
 
     update(time,delta) {
-        if (!this.#gameInited) {
-            if (this.#players[socket.id]) {
-                this.#gameInited = true;
-                this.#players.main = this.#players[socket.id];
-                this.cameras.main.startFollow(this.#players.main, false, 0.9, 0.9);
-            } else return;
-        }
-
         this.debug.clear();
 
         const sharedState = store.getState();
-        const keyStates = keyHandler.keyStates;
-
-        //if (keyStates.has("debugTest")) this.#players.main.setPosition(1000, 500);
-        //else this.#players.main.setPosition(0, 500);
-        //console.log({player: this.#players.main.x, camera: this.cameras.main.worldView.centerX});
-
-        //console.log(this.cameras.main.scrollX)
-
-        const zooming = sharedState.settings.alwaysZooming || (sharedState.settings.toggledZoom? this.zoomToggled : keyStates.has("zoom"));
-
-        this.mouseAngle = Phaser.Math.Angle.Between(
-            CONFIG.width / 2,
-            CONFIG.height / 2,
-            this.input.activePointer.x,
-            this.input.activePointer.y
-        );
-
-        this.updateZoomDist(zooming, sharedState.settings.zoomCurve? this.zoomCurve : this.zoomCurveLinear);
-        const [ offsetX, offsetY] = this.calcZoomOffset(this.zoomDist, this.mouseAngle);
-
-        this.cameras.main.setFollowOffset(-offsetX, -offsetY);
         
-        //this.debug.fillStyle(0x00ff00, 1);
-        //this.debug.fillPoint(this.#players.main.x + offsetX, this.#players.main.y + offsetY, 5);
-        //this.debug.fillStyle(0x0000ff, 1);
-        //this.debug.fillPoint(this.cameras.main.worldView.centerX, this.cameras.main.worldView.centerY, 5);
-        
-        this.drawShadows(sharedState.settings.zoomedViewCone && this.zoomDist > 0, this.#players.main.rotation);
+        this.drawShadows(sharedState.settings.zoomedViewCone && this.zoomDist > 0);
     
         this.displayWalls();
 
-        socket.emit("updateData",{ 
-            targetAngle: Phaser.Math.RadToDeg(this.mouseAngle),
-            keyStates: Array.from(keyStates),
-            zoomDist: this.zoomDist
-        });
+        if (this.#players.main) {
+            const keyStates = keyHandler.keyStates;
 
+            //if (keyStates.has("debugTest")) this.#players.main.setPosition(1000, 500);
+            //else this.#players.main.setPosition(0, 500);
+            //console.log({player: this.#players.main.x, camera: this.cameras.main.worldView.centerX});
+
+            //console.log(this.cameras.main.scrollX)
+            
+            //this.debug.fillStyle(0x00ff00, 1);
+            //this.debug.fillPoint(this.#players.main.x + offsetX, this.#players.main.y + offsetY, 5);
+            //this.debug.fillStyle(0x0000ff, 1);
+            //this.debug.fillPoint(this.cameras.main.worldView.centerX, this.cameras.main.worldView.centerY, 5);
+
+            const zooming = sharedState.settings.alwaysZooming || (sharedState.settings.toggledZoom? this.zoomToggled : keyStates.has("zoom"));
+
+            this.mouseAngle = Phaser.Math.Angle.Between(
+                CONFIG.width / 2,
+                CONFIG.height / 2,
+                this.input.activePointer.x,
+                this.input.activePointer.y
+            );
+
+            this.updateZoomDist(zooming, sharedState.settings.zoomCurve? this.zoomCurve : this.zoomCurveLinear);
+            const [ offsetX, offsetY] = this.calcZoomOffset(this.zoomDist, this.mouseAngle);
+
+            this.cameras.main.setFollowOffset(-offsetX, -offsetY);
+
+            socket.emit("updateData",{ 
+                targetAngle: Phaser.Math.RadToDeg(this.mouseAngle),
+                keyStates: Array.from(keyStates),
+                zoomDist: this.zoomDist
+            });
+        }
     }
 
     #handleSocket() {
@@ -140,6 +134,11 @@ export default class GameScene extends Phaser.Scene {
             if (!player) {
                 console.info({ "PLAYER JOINED": msg });
                 this.#players[msg.id] = new Player(this,msg.x,msg.y,msg.angle,msg.id == socket.id, msg.team);
+
+                if (msg.id == socket.id) {
+                    this.#players.main = this.#players[socket.id];
+                    this.cameras.main.startFollow(this.#players.main, false, 0.9, 0.9);
+                }
             } else {
                 player.setPosition(msg.x,msg.y);
                 //console.log(msg.x + " " + msg.y);
@@ -155,10 +154,14 @@ export default class GameScene extends Phaser.Scene {
 
             console.info({ "PLAYER LEFT": msg });
             if (this.#players[msg.id].mainPlayer) {
-                setTimeout(() => window.location.reload(), 2000);
+                //setTimeout(() => window.location.reload(), 2000);
             }
+
             this.#players[msg.id].kill();
             delete this.#players[msg.id];
+
+            if (this.#players.main.id == msg.id)
+                delete this.#players.main;
         });
 
         socket.on("bowDraw",msg => {
@@ -220,12 +223,12 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
-    drawShadows(restrictFOV, angle) {
+    drawShadows(restrictFOV) {
         this.visibilityGraphics.fillStyle(0xff0000);
         this.visibilityGraphics.clear();
 
         for (const player of Object.values(this.#players)) {
-            if (player.team != this.#players.main.team)
+            if (player.team != this.#players.main?.team)
                 continue;
 
             let offsetX, offsetY;
@@ -243,16 +246,16 @@ export default class GameScene extends Phaser.Scene {
             let walls = this.unintersectingWalls;
 
             if (restrictFOV) { // restricted visibility cone disabled
-                const cwAngle = angle + this.ZOOMED_FOV;
-                const ccwAngle = angle - this.ZOOMED_FOV;
+                const cwAngle = player.rotation + this.ZOOMED_FOV;
+                const ccwAngle = player.rotation - this.ZOOMED_FOV;
 
                 walls = VisibilityPolygon.breakIntersections([ ...this.unintersectingWalls, 
                     [ 
-                        [ player.x - Math.cos(angle), player.y - Math.sin(angle) ], 
+                        [ player.x - Math.cos(player.rotation), player.y - Math.sin(player.rotation) ], 
                         [ player.x + Math.cos(cwAngle)*10000, player.y + Math.sin(cwAngle)*10000 ] 
                     ],
                     [ 
-                        [ player.x - Math.cos(angle), player.y - Math.sin(angle) ], 
+                        [ player.x - Math.cos(player.rotation), player.y - Math.sin(player.rotation) ], 
                         [ player.x + Math.cos(ccwAngle)*10000, player.y + Math.sin(ccwAngle)*10000 ] 
                     ] 
                 ]);

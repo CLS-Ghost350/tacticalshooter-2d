@@ -8,15 +8,14 @@ import socket from "../socket";
 import { useSelector, useDispatch } from 'react-redux';
 import { setGameState } from '../gameSlice';
 
-export default function Sidebar({ setOpen }) {
+export default function Scoreboard({ close }) {
     const dispatch = useDispatch();
 
     const join = team => {
         socket.emit("joinTeam", { team });
         dispatch(setGameState({ key: "team", value: team }))
 
-        socket.emit("respawn");
-        setOpen(false);
+        close();
     }
 
     return <div className={styles.scoreboardOuter}>

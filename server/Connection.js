@@ -19,6 +19,7 @@ module.exports = class Connection {
     get ID() { return this.#socket.id; }
 
     team = null;
+    player = null;
     zoomDist = 0;
     
     constructor(match, socket) {
@@ -37,17 +38,19 @@ module.exports = class Connection {
         });
 
         this.#socket.on("joinTeam", ({ team }) => {
-            this.team = team;
+            if (this.player) return;
+
+            console.info({ "PLAYER JOINED": { id: this.ID, team } });
+            this.player = new Player(this.match, this, this.ID);
+
+            if (team != this.team) {
+                // switched teams
+                this.team = team;
+            }
         });
 
-        this.#socket.on("respawn",msg => {
-            console.info({ "PLAYER RESPAWNED": { id: this.ID } });
-
-            this.player = new Player(this.match, this, this.ID);
-        })
-
         this.#socket.on("updateData",msg => {
-            if (!this.player) return this.destroy();
+            //if (!this.player) return this.destroy(); // what does this do
             if (!isNaN(msg.targetAngle)) this.#targetAngle = msg.targetAngle;
             if (!isNaN(msg.zoomDist)) this.zoomDist = msg.zoomDist;
             if (msg.keyStates instanceof Array) this.#keyStates = msg.keyStates;
@@ -55,6 +58,11 @@ module.exports = class Connection {
     }
 
     update(TIME_SINCE) {
+    }
+
+    killPlayer() {
+        this.player = null;
+        this.match.namespace.emit("playerLeft",{ id: this.ID });
     }
 
     destroy() {
