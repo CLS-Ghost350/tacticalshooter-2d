@@ -14,7 +14,7 @@ const PAGES = {
 export default function SettingsMenu({ open, close }) {
     const [ page, setPage ] = useState("Keybinds");
 
-    return <dialog open={open} className={styles.settingsMenu}> 
+    return <dialog open={open} className={`${styles.settingsMenu} ${styles.dialogModal}`}> 
         <nav className={styles.settingsNav}>
             { Object.keys(PAGES).map(name => 
                 <div key={name} 

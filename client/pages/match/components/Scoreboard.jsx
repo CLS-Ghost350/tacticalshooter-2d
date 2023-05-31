@@ -18,7 +18,7 @@ export default function Scoreboard({ open, close }) {
         close();
     }
 
-    return <dialog open={open} className={styles.scoreboard}> 
+    return <dialog open={open} className={`${styles.scoreboard} ${styles.dialogModal}`}> 
         <header className={styles.scoreboardHeader}>AAA</header>
 
         <div className={styles.scoreboardTeamsContainer}>

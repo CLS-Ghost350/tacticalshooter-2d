@@ -1,3 +1,9 @@
+.dialogModal {
+    left: calc(var(--game-width) / 2);
+    top: calc(var(--game-height) / 2);
+    margin: 0;
+    transform: translate(-50%, -50%);
+}
 
 .zoomOptionsOption {
     display: inline-block;
@@ -17,12 +23,8 @@
     background-color: white;
     width: 70vh;
     height: 70vh;
-    left: calc(var(--game-width) / 2);
-    top: calc(var(--game-height) / 2);
-    margin: 0;
     padding: 0;
     border: none;
-    transform: translate(-50%, -50%);
 }
 
 .settingsNav {
@@ -101,10 +103,6 @@
     background-color: white;
     width: 70vh;
     height: 70vh;
-    left: calc(var(--game-width) / 2);
-    top: calc(var(--game-height) / 2);
-    margin: 0;
-    transform: translate(-50%, -50%);
     padding: 0;
     border: none;
 }
