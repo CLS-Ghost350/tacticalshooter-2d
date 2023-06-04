@@ -1,6 +1,6 @@
 .dialogModal {
-    left: calc(var(--game-width) / 2);
-    top: calc(var(--game-height) / 2);
+    left: 50vw;
+    top: 50vh;
     margin: 0;
     transform: translate(-50%, -50%);
 }

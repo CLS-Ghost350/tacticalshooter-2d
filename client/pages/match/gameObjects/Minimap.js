@@ -8,7 +8,6 @@ export default class Minimap extends Phaser.GameObjects.Image {
         this.#mapScale = scale;
         this.setScale(scale * 6);
         this.shadows.setScale(this.scale);
-        this.graphics.setPosition(CONFIG.width - 20 - this.displayWidth, 20);
     }
 
     get mapScale() { return this.#mapScale; }
@@ -20,7 +19,6 @@ export default class Minimap extends Phaser.GameObjects.Image {
         this.game = game;
         
         this.setOrigin(1, 0);
-        this.setPosition(CONFIG.width - 20, 20);
         this.setScrollFactor(0);
         this.setDepth(200);
 
@@ -38,12 +36,16 @@ export default class Minimap extends Phaser.GameObjects.Image {
     }
 
     preUpdate(time,delta) {
+        this.setPosition(this.game.cameras.main.width - 20, 20);
+        this.graphics.setPosition(this.game.cameras.main.x + this.game.cameras.main.width - 20 - this.displayWidth, 20);
+        this.shadows.setPosition(this.game.cameras.main.width - 20, 20)
+
         this.graphics.clear();
 
         if (!this.game.players.main) return;
 
         const visibilityGraphics = Phaser.Utils.Objects.Clone(this.game.visibilityGraphics);
-        visibilityGraphics.setPosition(CONFIG.width - 20 - this.displayWidth, 20);
+        visibilityGraphics.setPosition(this.game.cameras.main.width - 20 - this.displayWidth, 20);
         visibilityGraphics.setScrollFactor(0);
         visibilityGraphics.setScale(this.#mapScale);
 

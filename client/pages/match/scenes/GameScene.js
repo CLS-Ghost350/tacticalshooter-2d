@@ -83,6 +83,10 @@ export default class GameScene extends Phaser.Scene {
     update(time,delta) {
         this.debug.clear();
 
+        //this.cameras.main.setZoom(window.innerWidth / 1920); // 1920 width
+        this.ZOOM_SCALE = this.cameras.main.width/2 * 0.6;
+        this.heightWidthRatio = this.cameras.main.height / this.cameras.main.width;
+
         const sharedState = store.getState();
         
         this.drawShadows(sharedState.settings.zoomedViewCone && this.zoomDist > 0);
@@ -106,8 +110,8 @@ export default class GameScene extends Phaser.Scene {
             const zooming = sharedState.settings.alwaysZooming || (sharedState.settings.toggledZoom? this.zoomToggled : keyStates.has("zoom"));
 
             this.mouseAngle = Phaser.Math.Angle.Between(
-                CONFIG.width / 2,
-                CONFIG.height / 2,
+                this.cameras.main.centerX,
+                this.cameras.main.centerY,
                 this.input.activePointer.x,
                 this.input.activePointer.y
             );
@@ -202,10 +206,14 @@ export default class GameScene extends Phaser.Scene {
         let zoomAmount = 0;
 
         if (zooming) {
-            const dx = this.input.activePointer.x - CONFIG.width/2;
-            const dy = this.input.activePointer.y - CONFIG.height/2;
-            const dist = Math.sqrt((dx * this.heightWidthRatio)**2 + dy**2);
-            zoomAmount = zoomCurve(dist / Math.sqrt(2 * (CONFIG.width/2)**2));
+            const dx = this.input.activePointer.x - this.cameras.main.centerX;
+            const dy = this.input.activePointer.y - this.cameras.main.centerY;
+
+            // const dist = Math.sqrt((dx * this.heightWidthRatio)**2 + dy**2);
+            // zoomAmount = zoomCurve(dist / Math.sqrt(2 * (this.cameras.main.width/2)**2)); // diagonal dist
+
+            const dist = Math.sqrt(dx**2 + dy**2);
+            zoomAmount = zoomCurve(dist / Math.sqrt(2 * (this.cameras.main.width/2)**2)); // diagonal dist
         }
 
         const dz = zoomAmount - this.zoomDist;
@@ -216,7 +224,8 @@ export default class GameScene extends Phaser.Scene {
     calcZoomOffset(zoomDist, angle) {
         return [ 
             Math.cos(angle) * zoomDist * this.ZOOM_SCALE,
-            Math.sin(angle) * zoomDist * this.heightWidthRatio * this.ZOOM_SCALE 
+            //Math.sin(angle) * zoomDist * this.heightWidthRatio * this.ZOOM_SCALE 
+            Math.sin(angle) * zoomDist * this.ZOOM_SCALE 
         ];
     }
 
@@ -243,10 +252,10 @@ export default class GameScene extends Phaser.Scene {
             else
                 [ offsetX, offsetY ] = this.calcZoomOffset(player.zoomDist, player.rotation);
 
-            const viewTop = player.y - CONFIG.height/2 + offsetY;
-            const viewLeft = player.x - CONFIG.width/2 + offsetX;
-            const viewBottom = player.y + CONFIG.height/2 + offsetY;
-            const viewRight = player.x + CONFIG.width/2 + offsetX;
+            const viewTop = player.y - this.cameras.main.height/2 + offsetY;
+            const viewLeft = player.x - this.cameras.main.width/2 + offsetX;
+            const viewBottom = player.y + this.cameras.main.height/2 + offsetY;
+            const viewRight = player.x + this.cameras.main.width/2 + offsetX;
 
             let walls = this.unintersectingWalls;
 

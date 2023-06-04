@@ -3,7 +3,7 @@ import { createSlice } from '@reduxjs/toolkit'
 const initialState = {
     zoomedViewCone: false,
     zoomCurve: false,
-    alwaysZooming: false,
+    alwaysZooming: true,
     toggledZoom: false,
 
     keybinds: {

@@ -13,3 +13,7 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<Provider store={store}><Main/></Provider>);
 
 const phaserGame = new Phaser.Game(CONFIG);
+
+window.addEventListener('resize', e => {
+    phaserGame.scale.resize(window.innerWidth, window.innerHeight);
+}, false);
