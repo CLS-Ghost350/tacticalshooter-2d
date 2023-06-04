@@ -76,6 +76,10 @@ module.exports = class Match {
 
     addToTeam(connection, team) {}
 
+    updateScoreboard() {
+        
+    }
+
     #update = DELTA_TIME => {
         //GameObject.testCollisions()
 

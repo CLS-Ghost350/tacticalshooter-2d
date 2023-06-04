@@ -36,7 +36,7 @@ const keybindTypes = [
     ["Move Down", "moveDown"],
     ["Move Right", "moveRight"],
     ["Draw Bow", "drawBow"],
-    ["Zoom", "zoom"]
+    ["Zoom", "zoom"],
 ]
 
 function KeybindsTab(props) {
@@ -46,7 +46,7 @@ function KeybindsTab(props) {
     const keybinds = useSelector(state => state.settings.keybinds);
 
     const dispatchKey = (type, key) => {
-        dispatch(setKeybind({ type, key }));
+        dispatch(setKeybind({ type: type.slice(0, -1), key, slot: type.at(-1) }));
         setFocused(null);
     }
 
@@ -70,10 +70,16 @@ function KeybindsTab(props) {
             <li key={kbType[1]} className={styles.settingsOption}>
                 {kbType[0]}:
 
-                <div className={`${styles.keyInput} ${focusedOption == kbType[1]? styles.focusedKeyInput : ""}`} 
-                    onMouseDown={e => focusedOption == kbType[1] || setFocused(kbType[1])}>
+                <div className={`${styles.keyInput} ${focusedOption == kbType[1]+"0"? styles.focusedKeyInput : ""}`} 
+                    onMouseDown={e => focusedOption == kbType[1] || setFocused(kbType[1]+"0")}>
 
-                    {focusedOption == kbType[1]? "Press a Key" : keybinds[kbType[1]]}
+                    {focusedOption == kbType[1]+"0"? "Press a Key" : keybinds[kbType[1]][0] || "None"}
+                </div>
+
+                <div className={`${styles.keyInput} ${focusedOption == kbType[1]+"1"? styles.focusedKeyInput : ""}`} 
+                    onMouseDown={e => focusedOption == kbType[1] || setFocused(kbType[1]+"1")}>
+
+                    {focusedOption == kbType[1]+"1"? "Press a Key" : keybinds[kbType[1]][1]}
                 </div>
             </li>
         )}

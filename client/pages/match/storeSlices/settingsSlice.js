@@ -7,14 +7,13 @@ const initialState = {
     toggledZoom: false,
 
     keybinds: {
-        "moveUp": "KeyW",
-        "moveDown": "KeyS",
-        "moveLeft": "KeyA",
-        "moveRight": "KeyD",
-        "drawBow": "MouseRight",
-        //"hit": "MouseLeft",
-        "zoom": "ShiftLeft",
-        "debugTest": "KeyP"
+        "moveUp": ["KeyW", "ArrowUp"],
+        "moveDown": ["KeyS", "ArrowDown"],
+        "moveLeft": ["KeyA", "ArrowLeft"],
+        "moveRight": ["KeyD", "ArrowRight"],
+        "drawBow": ["MouseLeft", "Space"],
+        "zoom": ["ShiftLeft", "ShiftRight"],
+        "debugTest": ["KeyP", "KeyP"]
     }
 }
 
@@ -27,7 +26,7 @@ export const settingsSlice = createSlice({
         },
 
         setKeybind: (state, action) => {
-            state.keybinds[action.payload.type] = action.payload.key;
+            state.keybinds[action.payload.type][action.payload.slot] = action.payload.key;
         }
     },
 })

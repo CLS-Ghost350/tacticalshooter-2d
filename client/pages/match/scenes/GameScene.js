@@ -141,7 +141,7 @@ export default class GameScene extends Phaser.Scene {
                     this.cameras.main.startFollow(this.#players.main, false, 0.9, 0.9);
                 }
 
-                store.dispatch(addPlayer({ player: this.#players[msg.id] })); // the 'player' connections aren't linked w/ the physical players
+                store.dispatch(addPlayer({ player: { team: this.#players[msg.id].team } })); // the 'player' connections aren't linked w/ the physical players
             } else {
                 player.setPosition(msg.x,msg.y);
                 //console.log(msg.x + " " + msg.y);
@@ -160,7 +160,7 @@ export default class GameScene extends Phaser.Scene {
                 //setTimeout(() => window.location.reload(), 2000);
             }
 
-            store.dispatch(removePlayer({ player: this.#players[msg.id] }));
+            store.dispatch(removePlayer({ player: { team: this.#players[msg.id].team } }));
 
             this.#players[msg.id].kill();
             delete this.#players[msg.id];

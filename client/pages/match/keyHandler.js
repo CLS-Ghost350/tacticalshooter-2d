@@ -23,7 +23,6 @@ class KeyHandler {
         this.updateKeyBindings();
         subscribeActionAfter(setKeybind.toString(), this.updateKeyBindings.bind(this));
 
-        // todo: rewrite in vanilla js
         // only detect keystokes when hovering over game canvas (div)
 
         //const gameArea = document.getElementById("gameArea");
@@ -105,9 +104,11 @@ class KeyHandler {
         const keybinds = store.getState().settings.keybinds;
 
         this.keyBindings = {};
-        for (const [ type, key ] of Object.entries(keybinds)) {
-            if (!this.keyBindings[key]) this.keyBindings[key] = new Set();
-            this.keyBindings[key].add(type);
+        for (const [ type, keys ] of Object.entries(keybinds)) {
+            for (const key of keys) {
+                if (!this.keyBindings[key]) this.keyBindings[key] = new Set();
+                this.keyBindings[key].add(type);
+            }
         }
     }
 
