@@ -60,7 +60,7 @@ function linePoint(x1, y1, x2, y2, px, py, len) {
     const d2 = util.pointsDistance(px,py, x2,y2);
 
     // get the length of the line
-    const lineLen = len || util.pointsDistance(x1,y1, x2,y2);
+    const lineLen = len ?? util.pointsDistance(x1,y1, x2,y2);
 
     // since floats are so minutely accurate, add
     // a little buffer zone that will give collision

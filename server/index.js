@@ -9,7 +9,7 @@ const Match = require("./Match.js");
 
 class Server {
     HOSTNAME = process.env.PORT ? "0.0.0.0" : "127.0.0.1";
-    PORT = process.env.PORT || 8000; 
+    PORT = process.env.PORT ?? 8000; 
 
     CLIENT_PATH = path.join(__dirname,"..","client"); 
     DEV_MODE = process.argv[1] == "dev"; 
