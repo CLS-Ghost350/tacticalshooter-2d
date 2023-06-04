@@ -1,5 +1,5 @@
 import { store } from "./store";
-import { setKeybind } from "./settingsSlice";
+import { setKeybind } from "./storeSlices/settingsSlice";
 import { subscribeActionAfter, subscribeAfter } from 'redux-subscribe-action';
 
 class KeyHandler {

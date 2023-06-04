@@ -14,7 +14,8 @@ import VisibilityPolygon from "../VisibilityPolygon";
 import bezier from "bezier-easing";
 
 import { store } from "../store";
-import { setSetting } from "../settingsSlice";
+import { setSetting } from "../storeSlices/settingsSlice";
+import { setScoreboardState, addPlayer, removePlayer } from "../storeSlices/scoreboardSlice";
 import { subscribeActionAfter, subscribeAfter } from 'redux-subscribe-action';
 
 export default class GameScene extends Phaser.Scene {
@@ -139,6 +140,8 @@ export default class GameScene extends Phaser.Scene {
                     this.#players.main = this.#players[socket.id];
                     this.cameras.main.startFollow(this.#players.main, false, 0.9, 0.9);
                 }
+
+                store.dispatch(addPlayer({ player: this.#players[msg.id] })); // the 'player' connections aren't linked w/ the physical players
             } else {
                 player.setPosition(msg.x,msg.y);
                 //console.log(msg.x + " " + msg.y);
@@ -156,6 +159,8 @@ export default class GameScene extends Phaser.Scene {
             if (this.#players[msg.id].mainPlayer) {
                 //setTimeout(() => window.location.reload(), 2000);
             }
+
+            store.dispatch(removePlayer({ player: this.#players[msg.id] }));
 
             this.#players[msg.id].kill();
             delete this.#players[msg.id];

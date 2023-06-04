@@ -2,7 +2,7 @@ import React from "react";
 import { useState, useEffect } from "react";
 
 import { useSelector, useDispatch } from 'react-redux';
-import { setSetting, setKeybind } from '../settingsSlice';
+import { setSetting, setKeybind } from '../storeSlices/settingsSlice';
 
 import styles from "@/styles/match.module.css"
 
