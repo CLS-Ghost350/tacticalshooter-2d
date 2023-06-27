@@ -3,6 +3,8 @@ const Arrow = require("./Arrow.js");
 const util = require("../shared/util");
 const collisions = require("../shared/collisions");
 
+const bezier = require("bezier-easing");
+
 module.exports = class Player extends GameObject {
     // move settings to seperate file? make them static?
     RADIUS = 15;
@@ -15,7 +17,9 @@ module.exports = class Player extends GameObject {
     ROTATION_DECCEL = 1.1; // above 1
     ROTATION_FRICTION = 0.3;
 
-    BOW_DRAW_TIME = 15;//10;//15;
+    BOW_DRAW_TIME = 12;//15;
+    BOW_DRAW_VEL_CURVE = bezier(1,0,1,0.2);
+    get ARROW_VEL() { return 200; }
 
     rotationVel = 0;
     angle = 0;
@@ -61,9 +65,20 @@ module.exports = class Player extends GameObject {
         if (this.connection.keyStates.includes("drawBow")) { // holding shoot button (right-click)
             if (this.bowDrawStatus == 0) this.match.namespace.emit("bowDraw",{ playerID: this.ID }) // start drawing
             if (this.bowDrawStatus < this.BOW_DRAW_TIME) this.bowDrawStatus += 1; // increase time drawn
-        } else if (this.bowDrawStatus > 0) {
-            if (this.bowDrawStatus == this.BOW_DRAW_TIME) {
-                const arrow = new Arrow(this.match, this.position.x, this.position.y, this.angle, this.connection.team)
+        } else if (this.bowDrawStatus > 0) { 
+            const velMul = Math.min(1, this.BOW_DRAW_VEL_CURVE(this.bowDrawStatus / this.BOW_DRAW_TIME));
+
+            if (velMul > 0.05) {
+                const radianAngle = util.degreesToRadians(this.angle);
+
+                const arrow = new Arrow(
+                    this.match, 
+                    this.position.x + Math.cos(radianAngle) * this.RADIUS*1.7, 
+                    this.position.y + Math.sin(radianAngle) * this.RADIUS*1.7, 
+                    this.angle, 
+                    this.ARROW_VEL * velMul, 
+                    this.connection.team
+                );
             }
 
             this.match.namespace.emit("bowDrawStop",{ playerID: this.ID });

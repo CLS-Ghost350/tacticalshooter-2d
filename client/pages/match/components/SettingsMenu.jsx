@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from 'react-redux';
 import { setSetting, setKeybind } from '../storeSlices/settingsSlice';
 
+import keyHandler from "../keyHandler";
+
 import styles from "@/styles/match.module.css"
 
 const PAGES = {
@@ -28,8 +30,6 @@ export default function SettingsMenu({ open, close }) {
     </dialog>
 }
 
-const MOUSE_BUTTONS = ["MouseLeft", "MouseMiddle", "MouseRight"];
-
 const keybindTypes = [
     ["Move Up", "moveUp"],
     ["Move Left", "moveLeft"],
@@ -37,6 +37,8 @@ const keybindTypes = [
     ["Move Right", "moveRight"],
     ["Draw Bow", "drawBow"],
     ["Zoom", "zoom"],
+    ["Previous Weapon", "prevWeapon"],
+    ["Next Weapon", "nextWeapon"]
 ]
 
 function KeybindsTab(props) {
@@ -54,14 +56,26 @@ function KeybindsTab(props) {
         if (!focusedOption) return;
 
         const keyDownHandler = e => dispatchKey(focusedOption, e.code);
-        const mouseDownHandler = e => dispatchKey(focusedOption, MOUSE_BUTTONS[e.button]);
+        const mouseDownHandler = e => dispatchKey(focusedOption, keyHandler.MOUSE_BUTTONS[e.button]);
 
-        window.addEventListener("keydown", keyDownHandler);
-        setTimeout(() => window.addEventListener("mousedown", mouseDownHandler), 1);
+        const mouseWheelListener = e => {
+            for (const [axis, amount] of Object.entries({ x: e.deltaX, y: e.deltaY, z: e.deltaZ })) {
+                if (amount == 0) continue; // no change
+                dispatchKey(focusedOption, keyHandler.MOUSE_WHEEL_ACTIONS[axis][amount > 0? 1 : 0])
+                return;
+            }
+        };
+
+        setTimeout(() => {
+            window.addEventListener("keydown", keyDownHandler);
+            window.addEventListener("mousedown", mouseDownHandler);
+            window.addEventListener("wheel", mouseWheelListener);
+        }, 1);
 
         return () => {
             window.removeEventListener("keydown", keyDownHandler);
             window.removeEventListener("mousedown", mouseDownHandler);
+            window.removeEventListener("wheel", mouseWheelListener);
         }
     }, [focusedOption]);
 

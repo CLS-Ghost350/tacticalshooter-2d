@@ -14,6 +14,8 @@ const defaultKeybinds = {
     "moveRight": ["KeyD", "ArrowRight"],
     "drawBow": ["MouseLeft", "Space"],
     "zoom": ["ShiftLeft", "ShiftRight"],
+    "prevWeapon": ["KeyQ", "ScrollUp"],
+    "nextWeapon": ["KeyE", "ScrollDown"],
     "debugTest": ["KeyP", "KeyP"]
 }
 

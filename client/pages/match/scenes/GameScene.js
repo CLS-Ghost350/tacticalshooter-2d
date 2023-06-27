@@ -48,6 +48,12 @@ export default class GameScene extends Phaser.Scene {
     }
 
     create() {
+        this.anims.create({
+            key: "bowAnimation",
+            frames: this.anims.generateFrameNumbers("bowSpritesheet"),
+            frameRate: 16,
+        }); 
+        
         this.debug = this.add.graphics();
         //this.debug.setDepth(100000);
 
@@ -188,8 +194,7 @@ export default class GameScene extends Phaser.Scene {
             
             else {
                 arrow.angle = msg.angle;
-                arrow.x = msg.x - Math.cos(arrow.rotation) * 9;
-                arrow.y = msg.y - Math.sin(arrow.rotation) * 9;
+                arrow.setPosition(msg.x, msg.y);
             }
         });
 
@@ -197,7 +202,7 @@ export default class GameScene extends Phaser.Scene {
             if (!this.#arrows[msg.id])
                 return console.warn({ "TO DESTROY ARROW DOES NOT EXIST": msg.id });
 
-            this.#arrows[msg.id].destroy();
+            this.#arrows[msg.id].fadeOutDestroy();
             delete this.#arrows[msg.id];
         }),100)
     }

@@ -1,7 +1,7 @@
 import util from "@shared/util";
 
 export default class Bow extends Phaser.GameObjects.Sprite {
-    FRAME_RATE = 13;
+    FRAME_RATE = 16;
 
     constructor(game,player) {
         super(game,player.x,player.y,"bowSpritesheet");
@@ -13,12 +13,6 @@ export default class Bow extends Phaser.GameObjects.Sprite {
         this.setScale(1.8);
         this.setDepth(-1)
         this.setVisible(false);
-
-        this.game.anims.create({
-            key: "bowAnimation",
-            frames: this.game.anims.generateFrameNumbers("bowSpritesheet"),
-            frameRate: this.FRAME_RATE,
-        }); // anim alr exists
     }
 
     preUpdate(time,delta) {

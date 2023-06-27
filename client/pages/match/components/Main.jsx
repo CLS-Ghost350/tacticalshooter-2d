@@ -5,6 +5,7 @@ import styles from "@/styles/match.module.css"
 
 import SettingsMenu from "./SettingsMenu.jsx";
 import Scoreboard from "./Scoreboard.jsx";
+import WeaponsList from "./WeaponsList.jsx";
 
 import socket from "../socket";
 
@@ -29,5 +30,6 @@ export default function Main(props) {
         <img className={styles.settingsIcon} src="/assets/settingsIcon.png" onClick={ () => setSettingsOpen(!settingsOpen) }/>
         <SettingsMenu open={settingsOpen} close={ () => setSettingsOpen(false) }/>
         <Scoreboard open={scoreboardOpen} close={ () => setScoreboardOpen(false) }/>
+        <WeaponsList/>
     </>
 }

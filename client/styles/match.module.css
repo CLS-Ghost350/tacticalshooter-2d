@@ -117,6 +117,25 @@
     text-align: center;
 }
 
+.weaponsList {
+    position: fixed;
+    bottom: 4vh;
+    right: 4vh;
+    list-style-type: none; 
+}
+
+.weaponsList > li {
+    font-size: 35px;
+    font-weight: bold;  
+    text-shadow: 0px 0px 3px #000000;
+    color: #ffffff;
+}
+
+.weaponsList > li:not(.selectedWeapon) {
+    filter: brightness(70%);
+    opacity: 0.7;
+}
+
 .hidden {
     visibility: hidden !important;
 }

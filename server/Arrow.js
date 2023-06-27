@@ -16,13 +16,13 @@ module.exports = class Arrow extends GameObject {
     #cosAngle;
     #sinAngle;
 
-    get STARTING_VEL() { return 200; }
     get FRICTION_MUL() { return 0.95; }
     get FRICTION_SUB() { return 1; }
+    get STOPPED_DESPAWN_TIME() { return 5; }
     get AIR_DESPAWN_TIME() { return 10; }
     get HIT_WALL_DESPAWN_TIME() { return 300; }
 
-    constructor(match, x, y, angle, team) {
+    constructor(match, x, y, angle, vel, team) {
         super(match)
 
         this.position.x = x;
@@ -32,7 +32,7 @@ module.exports = class Arrow extends GameObject {
         Arrow.id++;
 
         this.match = match;
-        this.#velocity = this.STARTING_VEL;
+        this.#velocity = vel;
         this.team = team;
 
         const radianAngle = util.degreesToRadians(angle);
@@ -90,7 +90,12 @@ module.exports = class Arrow extends GameObject {
                 this.#velocity -= this.FRICTION_SUB;
             }
 
-            if (this.#velocity < 1) this.#velocity = 0;
+            if (this.#velocity < 1) {
+                if (this.#velocity != 0)
+                    this.#despawnTimer = this.STOPPED_DESPAWN_TIME;
+                    
+                this.#velocity = 0;
+            }
             //if (this.#velocity < 1) this.destroy();
         }
     }
