@@ -89,6 +89,10 @@ export default class GameScene extends Phaser.Scene {
     update(time,delta) {
         this.debug.clear();
 
+        const mouseWorldX = Math.round(this.input.activePointer.x + this.cameras.main.worldView.left);
+        const mouseWorldY = Math.round(this.input.activePointer.y + this.cameras.main.worldView.top);
+        document.getElementById("coords").innerText = `(${mouseWorldX}, ${mouseWorldY})`;
+
         //this.cameras.main.setZoom(window.innerWidth / 1920); // 1920 width
         this.ZOOM_SCALE = this.cameras.main.width/2 * 0.6;
         this.heightWidthRatio = this.cameras.main.height / this.cameras.main.width;
@@ -138,6 +142,10 @@ export default class GameScene extends Phaser.Scene {
     #handleSocket() {
         socket.removeAllListeners();
 
+        socket.on("objectObstructed", ({ id }) => {
+            this.#players[id]?.setVisible(false);
+        });
+
         socket.on("player",msg => {
             console.debug("test")
             const player = this.#players[msg.id];
@@ -146,8 +154,8 @@ export default class GameScene extends Phaser.Scene {
                 console.info({ "PLAYER JOINED": msg });
                 this.#players[msg.id] = new Player(this,msg.x,msg.y,msg.angle,msg.id == socket.id, msg.team);
 
-                if (msg.id == socket.id) {
-                    this.#players.main = this.#players[socket.id];
+                if (msg.socketId == socket.id) {
+                    this.#players.main = this.#players[msg.id];
                     this.cameras.main.startFollow(this.#players.main, false, 0.9, 0.9);
                 }
 
@@ -158,6 +166,7 @@ export default class GameScene extends Phaser.Scene {
                 player.angle = msg.angle;
                 player.team = msg.team;
                 player.zoomDist = msg.zoomDist;
+                this.#players[msg.id].setVisible(true);
             }
         });
 

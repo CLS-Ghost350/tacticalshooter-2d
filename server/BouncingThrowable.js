@@ -1,5 +1,5 @@
+const GameObject = require("./GameObject.js");
 
-const GameObject = require("./GameObject");
 const util = require("../shared/util");
 const collisions = require("../shared/collisions");
 
@@ -11,8 +11,8 @@ module.exports = class BouncingThrowable extends GameObject {
     frictionMul = 0.9;
     frictionSub = 0;
 
-    constructor(match, x, y, angle, distance, frictionMul, frictionSub) {
-        super(match)
+    constructor(match, type, x, y, angle, distance, frictionMul, frictionSub) {
+        super(match, type)
 
         this.position.x = x;
         this.position.y = y;

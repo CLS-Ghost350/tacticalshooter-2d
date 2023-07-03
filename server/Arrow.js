@@ -1,12 +1,10 @@
+const GameObject = require("./GameObject.js");
 
-const GameObject = require("./GameObject");
 const Player = require("./Player.js");
 const util = require("../shared/util");
 const collisions = require("../shared/collisions");
 
 module.exports = class Arrow extends GameObject {
-    static id = 0;
-
     position = { x: 0, y: 0 };
     angle;
     #velocity = 70;
@@ -16,20 +14,20 @@ module.exports = class Arrow extends GameObject {
     #cosAngle;
     #sinAngle;
 
-    get FRICTION_MUL() { return 0.95; }
-    get FRICTION_SUB() { return 1; }
+    get FRICTION_MUL() { return 0.3; }
+    get FRICTION_SUB() { return 400; }
+
     get STOPPED_DESPAWN_TIME() { return 5; }
     get AIR_DESPAWN_TIME() { return 10; }
     get HIT_WALL_DESPAWN_TIME() { return 300; }
 
+    get HIT_PLAYER_VEL_MUL() { return 0.125; }
+
     constructor(match, x, y, angle, vel, team) {
-        super(match)
+        super(match, "arrow");
 
         this.position.x = x;
         this.position.y = y;
-
-        this.id = Arrow.id;
-        Arrow.id++;
 
         this.match = match;
         this.#velocity = vel;
@@ -60,9 +58,19 @@ module.exports = class Arrow extends GameObject {
     }
 
     updatePosition(TIME_SINCE) {
-        const deltaTimeMul = TIME_SINCE / 1000 * 20;
-        const newX = this.position.x + this.#cosAngle * this.#velocity * deltaTimeMul;// + rotationSin * this.#velocity;
-        const newY = this.position.y + this.#sinAngle * this.#velocity * deltaTimeMul;//+ rotationCos * this.#velocity;
+        //const deltaTimeMul = TIME_SINCE / 1000 * 20;
+
+        const oldVel = this.#velocity;
+
+        if (this.#velocity > 0) {
+            this.#velocity *= this.FRICTION_MUL ** TIME_SINCE;
+            this.#velocity -= this.FRICTION_SUB * TIME_SINCE;
+        }
+
+        const avgVel = (oldVel+this.#velocity) / 2;
+
+        const newX = this.position.x + this.#cosAngle * avgVel * TIME_SINCE;// + rotationSin * this.#velocity;
+        const newY = this.position.y + this.#sinAngle * avgVel * TIME_SINCE;//+ rotationCos * this.#velocity;
 
         const coll = this.checkCollisions(newX, newY);
 
@@ -74,7 +82,7 @@ module.exports = class Arrow extends GameObject {
 
             if (coll.isPlayer) {
                 coll.object.kill();
-                this.#velocity /= 8;
+                this.#velocity *= this.HIT_PLAYER_VEL_MUL;
                 this.#despawnTimer = this.AIR_DESPAWN_TIME;
             } else {
                 this.#velocity = 0;
@@ -84,11 +92,6 @@ module.exports = class Arrow extends GameObject {
         } else {
             this.position.x = newX;
             this.position.y = newY;
-
-            if (this.#velocity > 0) {
-                this.#velocity *= this.FRICTION_MUL;
-                this.#velocity -= this.FRICTION_SUB;
-            }
 
             if (this.#velocity < 1) {
                 if (this.#velocity != 0)

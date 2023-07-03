@@ -55,15 +55,21 @@ export default class Minimap extends Phaser.GameObjects.Image {
         this.shadows.setMask(shadowsVisibilityMask);
 
         for (const player of Object.values(this.game.players)) {
-            if (player.team != this.game.players.main.team)
-                continue;
+            const playerMapPos = this.worldCoordsToMinimap(player.x, player.y);
 
-            if (player.mainPlayer)
+            if (player.team != this.game.players.main.team) {
+                this.graphics.fillStyle(0xFF0000, 1);
+
+                if (player.visible == false) {
+                    this.graphics.fillStyle(0xCC0000, 1);
+                    this.graphics.fillCircle(playerMapPos[0], playerMapPos[1], 2);
+                    continue;
+                }
+            } else if (player.mainPlayer)
                 this.graphics.fillStyle(0x0000FF, 1);
             else
                 this.graphics.fillStyle(0x00ff00, 1);
 
-            const playerMapPos = this.worldCoordsToMinimap(player.x, player.y);
             this.graphics.fillCircle(playerMapPos[0], playerMapPos[1], 3);
         }
     }

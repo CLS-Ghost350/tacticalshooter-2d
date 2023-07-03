@@ -1,7 +1,9 @@
-const GameObject = require("./GameObject");
+const GameObject = require("./GameObject.js");
+
 const Arrow = require("./Arrow.js");
 const util = require("../shared/util");
 const collisions = require("../shared/collisions");
+const lineOfSight = require("./lineOfSight");
 
 const bezier = require("bezier-easing");
 
@@ -9,17 +11,17 @@ module.exports = class Player extends GameObject {
     // move settings to seperate file? make them static?
     RADIUS = 15;
 
-    DEFAULT_ACCEL = 3.4; // increase move speed, decrease bow draw time
-    BOW_DRAW_MOVE_ACCEL = 2.6;
-    MOVE_FRICTION = 0.55//0.5;
+    DEFAULT_ACCEL = 1360//68;//3.4; // increase move speed, decrease bow draw time
+    BOW_DRAW_MOVE_ACCEL = 1040//52;//2.6;
+    MOVE_FRICTION = 0.000006415//0.55//0.5;
 
-    ROTATION_ACCEL = 0.45;
+    ROTATION_ACCEL = 180//9;//0.45;
     ROTATION_DECCEL = 1.1; // above 1
-    ROTATION_FRICTION = 0.3;
+    ROTATION_FRICTION = 3.4868 * 10**(-11)//0.3;
 
     BOW_DRAW_TIME = 12;//15;
     BOW_DRAW_VEL_CURVE = bezier(1,0,1,0.2);
-    get ARROW_VEL() { return 200; }
+    get ARROW_VEL() { return 4000; }
 
     rotationVel = 0;
     angle = 0;
@@ -33,37 +35,47 @@ module.exports = class Player extends GameObject {
 
     alive = true;
 
-    constructor(match, connection, id) {
-        super(match);
+    constructor(match, connection) {
+        super(match, "player");
 
-        this.ID = id;
         this.match = match;
         this.connection = connection;
 
         //this.match.namespace.emit("player", { x: 0, y: 0, angle: 0, id: this.ID});
     }
 
-    update(deltaTime) {
-        const deltaTimeMul = deltaTime/1000 * this.match.CORRECT_TPS;
-
-        this.updateVelocity(deltaTimeMul);
-        this.moveCollideWalls(deltaTimeMul);
-        this.updateRotation(deltaTimeMul);
-        this.updateBow();
-
-        this.match.namespace.emit("player",{
-            x: this.position.x,
+    getUpdateData() {
+        return {
+            x: this.position.x, 
             y: this.position.y,
             angle: this.angle,
-            id: this.ID,
+            id: this.id,
+            socketId: this.connection.ID,
             team: this.connection.team,
             zoomDist: this.connection.zoomDist
-        });
+        };
+    }
+
+    emitUpdate(socket) {
+        socket.emit("player", this.getUpdateData());
+    }
+
+    isVisibleFrom(x, y) {
+        return lineOfSight.circleLineOfSight(x, y, this.position.x, this.position.y, this.RADIUS, this.match.walls)
+    }
+
+    update(deltaTime) {
+        //const deltaTimeMul = deltaTime/1000 * this.match.CORRECT_TPS;
+
+        this.updateVelocity(deltaTime);
+        this.moveCollideWalls(deltaTime);
+        this.updateRotation(deltaTime);
+        this.updateBow();
     }
 
     updateBow() {
         if (this.connection.keyStates.includes("drawBow")) { // holding shoot button (right-click)
-            if (this.bowDrawStatus == 0) this.match.namespace.emit("bowDraw",{ playerID: this.ID }) // start drawing
+            if (this.bowDrawStatus == 0) this.match.namespace.emit("bowDraw",{ playerID: this.id }) // start drawing
             if (this.bowDrawStatus < this.BOW_DRAW_TIME) this.bowDrawStatus += 1; // increase time drawn
         } else if (this.bowDrawStatus > 0) { 
             const velMul = Math.min(1, this.BOW_DRAW_VEL_CURVE(this.bowDrawStatus / this.BOW_DRAW_TIME));
@@ -81,28 +93,28 @@ module.exports = class Player extends GameObject {
                 );
             }
 
-            this.match.namespace.emit("bowDrawStop",{ playerID: this.ID });
+            this.match.namespace.emit("bowDrawStop",{ playerID: this.id });
             this.bowDrawStatus = 0;
         }
     }
 
-    updateVelocity(deltaTimeMul) {
-        this.vel.x *= this.MOVE_FRICTION ** deltaTimeMul;
-        this.vel.y *= this.MOVE_FRICTION ** deltaTimeMul;
+    updateVelocity(deltaTime) {
+        this.vel.x *= this.MOVE_FRICTION ** deltaTime;
+        this.vel.y *= this.MOVE_FRICTION ** deltaTime;
 
         this.move.x = 0;
         this.move.y = 0;
 
         const keyStates = this.connection.keyStates;
 
-        if (keyStates.includes("moveUp")) this.move.y -= 1;
-        if (keyStates.includes("moveDown")) this.move.y += 1;
-        if (keyStates.includes("moveLeft")) this.move.x -= 1;
-        if (keyStates.includes("moveRight")) this.move.x += 1;
+        if (keyStates.includes("moveUp")) this.move.y -= deltaTime;
+        if (keyStates.includes("moveDown")) this.move.y += deltaTime;
+        if (keyStates.includes("moveLeft")) this.move.x -= deltaTime;
+        if (keyStates.includes("moveRight")) this.move.x += deltaTime;
 
         if (this.move.x != 0 && this.move.y != 0) {
-            this.move.x *= 0.707 * deltaTimeMul;
-            this.move.y *= 0.707 * deltaTimeMul;
+            this.move.x *= 0.707;
+            this.move.y *= 0.707;
         }
 
         if (this.bowDrawStatus > 0) {
@@ -114,26 +126,26 @@ module.exports = class Player extends GameObject {
         }
     }
 
-    updateRotation(deltaTimeMul) {
+    updateRotation(deltaTime) {
         const targetAngle = this.connection.targetAngle;
 
         let dist = targetAngle - this.angle;
         if (dist > 180) dist -= 360;
         else if (dist < -180) dist += 360;
 
-        this.rotationVel += this.ROTATION_ACCEL * (dist - this.rotationVel*this.ROTATION_DECCEL) * deltaTimeMul;
+        this.rotationVel += this.ROTATION_ACCEL * (dist - this.rotationVel*this.ROTATION_DECCEL*deltaTime) * deltaTime;
 
-        this.angle += this.rotationVel * deltaTimeMul;
+        this.angle += this.rotationVel * deltaTime;
         this.angle = util.angleOverflowCheck(this.angle);
-        this.rotationVel *= this.ROTATION_FRICTION ** deltaTimeMul;
+        this.rotationVel *= this.ROTATION_FRICTION ** deltaTime;
     }
 
-    moveCollideWalls(deltaTimeMul) {
+    moveCollideWalls(deltaTime) {
         // code could prob be better, but IT WORKS!!!!
         // run after velocity is updated, before movement is updated
 
-        const moveX = this.vel.x * deltaTimeMul;
-        const moveY = this.vel.y * deltaTimeMul;
+        const moveX = this.vel.x * deltaTime;
+        const moveY = this.vel.y * deltaTime;
 
         const moveAngle = Math.atan2(moveY, moveX);
         //const perpMoveAngle = vAngle + Math.PI/2;
@@ -206,9 +218,9 @@ module.exports = class Player extends GameObject {
 
     kill() {
         //this.connection.destroy();
-        this.match.removeGameObject(this);
         this.alive = false;
         this.connection.killPlayer();
+        super.destroy();
     }
 }
 

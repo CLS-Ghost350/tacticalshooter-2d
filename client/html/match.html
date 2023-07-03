@@ -31,6 +31,13 @@
         * {
             font-family: sans-serif;
         }
+
+        #coords {
+            position: fixed;
+            top: 1vh;
+            left: 5vw;
+            background-color: ghostwhite;
+        }
     </style>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -40,6 +47,8 @@
 <body>
     <div id="gameArea"></div>
     <div id="root"></div>
+
+    <p id="coords">(0, 0)</p>
 
     <script src="/bundles/match-bundle.js"></script>
 </body>

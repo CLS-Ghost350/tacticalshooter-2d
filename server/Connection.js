@@ -2,7 +2,6 @@
 // import project classes
 const util = require("../shared/util");
 const Player = require("./Player.js");
-//const GameObject = require("./GameObject.js");
 
 // export Connection class
 module.exports = class Connection {
@@ -41,11 +40,19 @@ module.exports = class Connection {
             if (this.player) return;
 
             console.info({ "PLAYER JOINED": { id: this.ID, team } });
-            this.player = new Player(this.match, this, this.ID);
+            this.player = new Player(this.match, this);
+            this.match.teams[team].viewers[this.player.id] = this.player;
+            this.match.teams[team].obstructableObjects[this.player.id] = this.player;
 
-            if (team != this.team) {
-                // switched teams
+            if (team != this.team) { // switched teams
+                if (this.team) {
+                    delete this.match.teams[this.team].viewers[this.player.id];
+                    delete this.match.teams[this.team].obstructableObjects[this.player.id];
+                }
+
                 this.team = team;
+
+                this.#socket.join(team);
             }
         });
 
@@ -61,15 +68,16 @@ module.exports = class Connection {
     }
 
     killPlayer() {
+        delete this.match.teams[this.team].viewers[this.player.id];
+        delete this.match.teams[this.team].obstructableObjects[this.player.id];
+        this.match.namespace.emit("playerLeft",{ id: this.player.id, socketId: this.ID });
         this.player = null;
-        this.match.namespace.emit("playerLeft",{ id: this.ID });
     }
 
     destroy() {
         console.info({ "PLAYER DISCONNECTED": { id: this.ID } });
-        this.match.namespace.emit("playerLeft",{ id: this.ID });
         
-        if (this.player) this.match.removeGameObject(this.player);
+        if (this.player) this.killPlayer();
         delete this.match.connections[this.ID];
 
         this.#socket.removeAllListeners(); 

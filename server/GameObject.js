@@ -1,16 +1,34 @@
-const util = require("../shared/util.js");
-
 module.exports = class GameObject {
-    //static gameObjects = [];
+    static id = 0;
 
-    constructor(match) {
-        match.addGameObject(this);
+    id;
+    match;
+    type;
+
+    constructor(match, type) {
+        this.id = GameObject.id;
+        GameObject.id++;
+
+        this.match = match;
+        this.match.addGameObject(this);
+
+        this.type = type;
     }
 
-    //destroy() {
-        //GameObject.gameObjects = GameObject.gameObjects.filter(item => item !== this);
-        // slow?
-    //}
-
     update(deltaTime) {}
+
+    getUpdateData() {
+        return {
+            id: this.id,
+            type: this.type
+        }
+    }
+
+    emitUpdate(socket) {
+        socket.emit("gameObject", this.getUpdateData())
+    }
+
+    destroy() {
+        this.match.removeGameObject(this.id);
+    }
 }

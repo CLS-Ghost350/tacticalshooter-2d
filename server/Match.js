@@ -2,9 +2,9 @@ const path = require("path");
 const fs = require('fs');
 
 const Connection = require("./Connection.js");
-const GameObject = require("./GameObject.js");
 const Wall = require("./Wall.js");
 const Arrow = require("./Arrow");
+const Team = require("./Team.js");
 
 module.exports = class Match {
     static ID = 0;
@@ -17,11 +17,12 @@ module.exports = class Match {
     DEV_MODE = process.argv[1] == "dev"; 
 
     connections = {};
-    bots = {};
+    //bots = {};
     walls = [];
-    gameObjects = [];
 
-    teams = { red: [], blue: [] }
+    gameObjects = {};
+
+    teams = { }
 
     #time = 0;
     #_stopGameLoop = false;
@@ -50,6 +51,9 @@ module.exports = class Match {
             this.walls.push(new Wall(this, ...wall));
          }
          // walls end
+
+         this.teams.a = new Team("a", this.namespace);
+         this.teams.b = new Team("b", this.namespace);
  
          this.#startGameLoop();
          //this.countTPS(); //fix tps too low
@@ -66,12 +70,12 @@ module.exports = class Match {
     }
 
     addGameObject(gameObject) {
-        this.gameObjects.push(gameObject);
+        this.gameObjects[gameObject.id] = gameObject;
     }
 
     removeGameObject(gameObject) {
-        this.gameObjects = this.gameObjects.filter(item => item !== gameObject);
-        // slow? use set?
+        const id = gameObject?.id ?? gameObject;
+        delete this.gameObjects[id];
     }
 
     addToTeam(connection, team) {}
@@ -83,17 +87,18 @@ module.exports = class Match {
     #update = DELTA_TIME => {
         //GameObject.testCollisions()
 
-       this.gameObjects.forEach(object => {
+        Object.values(this.gameObjects).forEach(object => {
             object.update(DELTA_TIME)
-        })
+        });
 
         Object.values(this.connections).forEach(connection => {
             connection.update(DELTA_TIME);
         });
 
-        Object.values(this.bots).forEach(bot => {
-            bot.update(DELTA_TIME);
-        });
+        for (const team of Object.values(this.teams)) {
+            team.updateVision(this.teams);
+            team.emitUpdate();
+        }
     }
 
     countTPS() {
@@ -112,7 +117,7 @@ module.exports = class Match {
         this.#time = Date.now();
 
         this.#_realTPSCounter++;
-        this.#update(DELTA_TIME);
+        this.#update(DELTA_TIME/1000);
 
         const updateTime = Date.now() - this.#time;
         //console.debug(updateTime);

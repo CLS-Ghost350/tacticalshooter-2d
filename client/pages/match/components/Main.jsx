@@ -15,7 +15,7 @@ export default function Main(props) {
 
     useEffect(() => {
         const listener = msg => {
-            if (msg.id == socket.id) {
+            if (msg.socketId == socket.id) {
                 setTimeout(() => setScoreboardOpen(true), 1500);
             }
         }

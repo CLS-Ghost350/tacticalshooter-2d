@@ -20,7 +20,7 @@ function radiansToDegrees(radians) {
 }
 
 function angleOverflowCheckRadians(angle) {
-    let newAngle = angle;
+    let newAngle = angle % (Math.PI*2);
 
     while (newAngle > Math.PI) newAngle -= Math.PI*2;
     while (newAngle < -Math.PI) newAngle += Math.PI*2;
@@ -29,7 +29,7 @@ function angleOverflowCheckRadians(angle) {
 }
 
 function angleOverflowCheck(angle) {
-    let newAngle = angle;
+    let newAngle = angle % 360;
 
     while (newAngle > 180) newAngle -= 360;
     while (newAngle < -180) newAngle += 360;
@@ -47,5 +47,5 @@ module.exports = {
     pointsDistance,
     radiansToDegrees,
     angleOverflowCheck,
-    angleOverflowCheckRadians
+    angleOverflowCheckRadians,
 }
