@@ -6,22 +6,35 @@ const collisions = require("../shared/collisions");
 module.exports = class BouncingThrowable extends GameObject {
     position = { x: 0, y: 0 };
     angle;
-    #velocity = 70;
+    #velocity = 1000;
 
-    frictionMul = 0.9;
-    frictionSub = 0;
+    #cosAngle;
+    #sinAngle;
 
-    constructor(match, type, x, y, angle, distance, frictionMul, frictionSub) {
+    //frictionMul = 0.3;
+    frictionSub = 100;
+
+    radius = 10;
+
+    constructor(match, type, radius, frictionSub, x, y, angle, distance, time) {
         super(match, type)
+
+        this.radius = radius;
 
         this.position.x = x;
         this.position.y = y;
 
-        this.frictionMul = frictionMul;
+        //this.frictionMul = frictionMul;
         this.frictionSub = frictionSub;
 
         this.match = match;
-        this.#velocity = distance * this.frictionMul;
+
+        this.#velocity = Math.sqrt(2 * frictionSub * distance); // dist travelled until vel is 0
+
+        if (time > 0 && this.#velocity/frictionSub > time) // time will be up before velocity hits 0 (stops moving)
+            this.#velocity = distance/time + frictionSub*time/2; // time < 0 = infinite time
+
+        console.log(distance + " " + this.#velocity)
 
         const radianAngle = util.degreesToRadians(angle);
         this.#cosAngle = Math.cos(radianAngle);
@@ -38,14 +51,20 @@ module.exports = class BouncingThrowable extends GameObject {
         }
     }
 
-    updatePosition(TIME_SINCE) {
-        const deltaTimeMul = TIME_SINCE / 1000 * 20;
-        const newX = this.position.x + this.#cosAngle * this.#velocity * deltaTimeMul;// + rotationSin * this.#velocity;
-        const newY = this.position.y + this.#sinAngle * this.#velocity * deltaTimeMul;//+ rotationCos * this.#velocity;
+    updatePosition(deltaTime) {
+        const oldVel = this.#velocity;
 
-        const coll = this.checkCollisions(newX, newY);
+        this.#velocity -= this.frictionSub*deltaTime;
+        this.#velocity = Math.max(this.#velocity, 0);
 
-        if (coll) {
+        const avgVel = (oldVel+this.#velocity) / 2
+
+        this.position.x += this.#cosAngle * avgVel * deltaTime;// + rotationSin * this.#velocity;
+        this.position.y += this.#sinAngle * avgVel * deltaTime;//+ rotationCos * this.#velocity;
+
+        //const coll = this.checkCollisions(newX, newY);
+
+        //if (coll) {
             //console.log(coll)
 
             //this.position.x = coll.x;
@@ -53,18 +72,7 @@ module.exports = class BouncingThrowable extends GameObject {
 
             //this.#velocity = 0;
 
-        } else {
-            this.position.x = newX;
-            this.position.y = newY;
-
-            if (this.#velocity > 0) {
-                this.#velocity *= this.frictionMul;
-                this.#velocity -= this.frictionSub;
-            }
-
-            if (this.#velocity < 1) this.#velocity = 0;
-            //if (this.#velocity < 1) this.destroy();
-        }
+        //}
     }
 
     checkCollisions(newX, newY) {
@@ -88,9 +96,5 @@ module.exports = class BouncingThrowable extends GameObject {
         }
 
         return closestColl;
-    }
-
-    destroy() {
-        this.match.removeGameObject(this);
     }
 }

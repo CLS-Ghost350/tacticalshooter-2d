@@ -1,11 +1,13 @@
 const GameObject = require("./GameObject.js");
 
 const Arrow = require("./Arrow.js");
+const BouncingThrowable = require("./BouncingThrowable.js");
 const util = require("../shared/util");
 const collisions = require("../shared/collisions");
 const lineOfSight = require("./lineOfSight");
 
 const bezier = require("bezier-easing");
+const Grenade = require("./Grenade.js");
 
 module.exports = class Player extends GameObject {
     // move settings to seperate file? make them static?
@@ -70,11 +72,22 @@ module.exports = class Player extends GameObject {
         this.updateVelocity(deltaTime);
         this.moveCollideWalls(deltaTime);
         this.updateRotation(deltaTime);
-        this.updateBow();
+
+        this.updateBow(); 
+        this.updateKnives(); 
     }
 
     updateBow() {
-        if (this.connection.keyStates.includes("drawBow")) { // holding shoot button (right-click)
+        if (this.connection.weaponSelected != "bow") {
+            if (this.bowDrawStatus > 0) {
+                this.match.namespace.emit("bowDrawStop",{ playerID: this.id });
+                this.bowDrawStatus = 0;
+            }
+            
+            return;
+        }
+
+        if (this.connection.keyStates.includes("shoot")) { // holding shoot button (right-click)
             if (this.bowDrawStatus == 0) this.match.namespace.emit("bowDraw",{ playerID: this.id }) // start drawing
             if (this.bowDrawStatus < this.BOW_DRAW_TIME) this.bowDrawStatus += 1; // increase time drawn
         } else if (this.bowDrawStatus > 0) { 
@@ -95,6 +108,21 @@ module.exports = class Player extends GameObject {
 
             this.match.namespace.emit("bowDrawStop",{ playerID: this.id });
             this.bowDrawStatus = 0;
+        }
+    }
+
+    updateKnives() {
+        if (this.connection.weaponSelected != "knives") 
+            return;
+        
+        if (this.connection.keyStates.includes("shoot")) {
+            const grenade = new Grenade(
+                this.match, 
+                this.position.x, 
+                this.position.y,
+                this.angle, 
+                this.connection.zoomDist*690*2
+            );
         }
     }
 

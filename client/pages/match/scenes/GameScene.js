@@ -7,6 +7,7 @@ import CONFIG from "../phaserConfig";
 
 import Player from "../gameObjects/Player";
 import Arrow from "../gameObjects/Arrow";
+import Grenade from "../gameObjects/Grenade";
 import Shadows from "../gameObjects/Shadows";
 import Minimap from "../gameObjects/Minimap";
 
@@ -22,6 +23,7 @@ export default class GameScene extends Phaser.Scene {
     #gameInited = false;
     #players = {};
     #arrows = {};
+    #grenades = {};
 
     get players() { return this.#players; }
 
@@ -134,7 +136,8 @@ export default class GameScene extends Phaser.Scene {
             socket.emit("updateData",{ 
                 targetAngle: Phaser.Math.RadToDeg(this.mouseAngle),
                 keyStates: Array.from(keyStates),
-                zoomDist: this.zoomDist
+                zoomDist: this.zoomDist,
+                weaponSelected: sharedState.game.weaponSelected
             });
         }
     }
@@ -207,13 +210,32 @@ export default class GameScene extends Phaser.Scene {
             }
         });
 
-        socket.on("arrowDestory",msg => setTimeout(() => {
+        socket.on("arrowDestory",msg => {
             if (!this.#arrows[msg.id])
                 return console.warn({ "TO DESTROY ARROW DOES NOT EXIST": msg.id });
 
             this.#arrows[msg.id].fadeOutDestroy();
             delete this.#arrows[msg.id];
-        }),100)
+        })
+
+        socket.on("grenade",msg => {
+            const grenade = this.#grenades[msg.id];
+
+            if (!grenade) this.#grenades[msg.id] = new Grenade(this,msg.x,msg.y,0);
+            
+            else {
+                //grenade.angle = msg.angle;
+                grenade.setPosition(msg.x, msg.y);
+            }
+        });
+
+        socket.on("grenadeDestory",msg => {
+            if (!this.#grenades[msg.id])
+                return console.warn({ "TO DESTROY GRENADE DOES NOT EXIST": msg.id });
+
+            this.#grenades[msg.id].destroy();
+            delete this.#grenades[msg.id];
+        })
     }
 
     updateZoomDist(zooming, zoomCurve) {

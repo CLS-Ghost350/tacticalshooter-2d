@@ -35,7 +35,7 @@ const keybindTypes = [
     ["Move Left", "moveLeft"],
     ["Move Down", "moveDown"],
     ["Move Right", "moveRight"],
-    ["Draw Bow", "drawBow"],
+    ["Shoot/Throw", "shoot"],
     ["Zoom", "zoom"],
     ["Previous Weapon", "prevWeapon"],
     ["Next Weapon", "nextWeapon"]

@@ -1,6 +1,6 @@
-export default class Arrow extends Phaser.GameObjects.Image {
+export default class Grenade extends Phaser.GameObjects.Image {
     constructor(game,x,y,angle) {
-        super(game,x,y,"arrowImg");
+        super(game,x,y,"demoCircleImg");
         game.add.existing(this);
 
         this.setAngle(angle);

@@ -20,6 +20,7 @@ module.exports = class Connection {
     team = null;
     player = null;
     zoomDist = 0;
+    weaponSelected = "bow";
     
     constructor(match, socket) {
         console.info({ "PLAYER CONNECTED": { id: socket.id } });
@@ -61,6 +62,7 @@ module.exports = class Connection {
             if (!isNaN(msg.targetAngle)) this.#targetAngle = msg.targetAngle;
             if (!isNaN(msg.zoomDist)) this.zoomDist = msg.zoomDist;
             if (msg.keyStates instanceof Array) this.#keyStates = msg.keyStates;
+            this.weaponSelected = msg.weaponSelected;
         });
     }
 

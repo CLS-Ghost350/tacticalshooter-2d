@@ -12,7 +12,7 @@ const defaultKeybinds = {
     "moveDown": ["KeyS", "ArrowDown"],
     "moveLeft": ["KeyA", "ArrowLeft"],
     "moveRight": ["KeyD", "ArrowRight"],
-    "drawBow": ["MouseLeft", "Space"],
+    "shoot": ["MouseLeft", "Space"],
     "zoom": ["ShiftLeft", "ShiftRight"],
     "prevWeapon": ["KeyQ", "ScrollUp"],
     "nextWeapon": ["KeyE", "ScrollDown"],

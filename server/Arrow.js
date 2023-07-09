@@ -151,6 +151,6 @@ module.exports = class Arrow extends GameObject {
 
     destroy() {
         this.match.namespace.emit("arrowDestory",{ id: this.id });
-        this.match.removeGameObject(this);
+        super.destroy();
     }
 }
