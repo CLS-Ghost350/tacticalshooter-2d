@@ -1,9 +1,11 @@
+const SortedArraySet = require("collections/sorted-array-set");
+const TreeSet = require("ml-tree-set");
 
 const collisions = require("../shared/collisions.js")
 const util = require("../shared/util.js");
 
-function circleLineOfSight(x, y, cx, cy, r, walls) {
-    const angle = Math.atan2(cy - y, cx - x);
+function circleLineOfSight(vx, vy, cx, cy, r, walls) {
+    const angle = Math.atan2(cy - vy, cx - vx);
     const perpAngle = angle + Math.PI/2;
 
     const sdx = Math.cos(perpAngle) * r;
@@ -16,63 +18,131 @@ function circleLineOfSight(x, y, cx, cy, r, walls) {
 
     //console.log(`(${sx1}, ${sy1}) (${sx2}, ${sy2})`)
 
-    return middlePerpLineLineOfSight(x, y, sx1, sy1, sx2, sy2, walls, perpAngle);
+    return lineLineOfSight(vx, vy, sx1, sy1, sx2, sy2, walls);
 }
 
-function middlePerpLineLineOfSight(x, y, lx1, ly1, lx2, ly2, walls, lineAngle, wallsChecked) {
-    lineAngle = lineAngle ?? Math.atan2(ly2 - ly1, lx2 - lx1);
-    wallsChecked = wallsChecked ?? 0;
+function lineLineOfSight(vx, vy, lx1, ly1, lx2, ly2, walls) { 
+    const lineLen = Math.sqrt((lx2 - lx1)**2 + (ly2 - ly1)**2);
+    const lineViewerDot = ( ((vx-lx1)*(lx2-lx1)) + ((vy-ly1)*(ly2-ly1)) ) / lineLen**2;
+  
+    // find the closest point to the viewer on the line
+    const closestX = lx1 + (lineViewerDot * (lx2-lx1));
+    const closestY = ly1 + (lineViewerDot * (ly2-ly1));
 
-    for (let i = wallsChecked; i < walls.length; i++) {
-        const wall = walls[i];
+    const angleFromLineClosest = Math.atan2(vy - closestY, vx - closestX);
+    const rotateAngle = -angleFromLineClosest + Math.PI/2;
+    const cosRotateAngle = Math.cos(rotateAngle);
+    const sinRotateAngle = Math.sin(rotateAngle);
 
-        // intersection between line and ray from starting point, going thru wall's endpoints, ending at line
-        let coll1 = collisions.lineLine(lx1, ly1, lx2, ly2, x, y, wall.start.x, wall.start.y, false, true);
-        if (coll1 && !collisions.linePoint(x, y, coll1[0], coll1[1], wall.start.x, wall.start.y)) coll1 = null;
+    //console.log(rotateAngle * 180 / Math.PI)
 
-        let coll2 = collisions.lineLine(lx1, ly1, lx2, ly2, x, y, wall.end.x, wall.end.y, false, true);
-        if (coll2 && !collisions.linePoint(x, y, coll2[0], coll2[1], wall.end.x, wall.end.y)) coll2 = null;
+    // make the closest point the origin
+    const movedLX1 = lx1 - closestX;
+    const movedLY1 = ly1 - closestY;
+    const movedLX2 = lx2 - closestX;
+    const movedLY2 = ly2 - closestY;
 
-        if (!coll1 && !coll2) { // wall covers either nothing or the entire view
-            if (collisions.lineLine(wall.start.x, wall.start.y, wall.end.x, wall.end.y, x, y, lx1, ly1)) 
-                return false; // wall covers everything
-            
-            continue; // wall covers nothing
-        }
+    // rotate line's endpoints about origin (closest point to viewer) by angle from closest point to viewer on line
+    const rotatedLX1 = movedLX1 * cosRotateAngle  -  movedLY1 * sinRotateAngle; 
+    const rotatedLX2 = movedLX2 * cosRotateAngle  -  movedLY2 * sinRotateAngle; 
 
-        //console.log(coll1, coll2)
+    let lineStart, lineEnd;
 
-        let coll;
-        if (coll1 && !coll2) coll = coll1;
-        if (!coll1 && coll2) coll = coll2;
-
-        if (!coll) { // both colliding; possible area split in 2
-            const dist1 = util.pointsDistance(lx1, ly1, ...coll1);
-            const dist2 = util.pointsDistance(lx1, ly1, ...coll2);
-
-            let closeColl = coll2;
-            let farColl = coll1;
-
-            if (dist1 < dist2) {
-                closeColl = coll1;
-                farColl = coll2;
-            }
-
-            return middlePerpLineLineOfSight(x, y, lx1, ly1, closeColl[0], closeColl[1], walls, lineAngle, i + 1)
-                || middlePerpLineLineOfSight(x, y, farColl[0], farColl[1], lx2, ly2, walls, lineAngle, i + 1);
-        }
-
-        // one end is cut off, the other not
-        if (collisions.lineLine(lx1, ly1, x, y, wall.start.x, wall.start.y, wall.end.x, wall.end.y)) {
-            lx1 = coll[0];
-            ly1 = coll[1];
-        } else {
-            lx2 = coll[0];
-            ly2 = coll[1];
-        }
+    if (rotatedLX1 < rotatedLX2) {
+        lineStart = rotatedLX1;
+        lineEnd = rotatedLX2;
+    } else {
+        lineStart = rotatedLX2;
+        lineEnd = rotatedLX1;
     }
 
-    return true;
+    //if (!(vx == 300 && vy == 700)) console.info(`${lineStart}, ${lineEnd}`); 
+
+    // make the closest point the origin
+    const movedVX = vx - closestX;
+    const movedVY = vy - closestY;
+
+    // rotate viewer about origin (closest point to viewer) by angle from closest point to viewer on line
+    const rotatedVX = 0 //movedVX * cosRotateAngle  -  movedVY * sinRotateAngle; // always = 0
+    const rotatedVY = movedVX * sinRotateAngle  +  movedVY * cosRotateAngle;
+
+    //console.info(`${rotatedVX}, ${rotatedVY}`)
+
+    const shadows = new TreeSet((s1, s2) => s1[0] - s2[0]);
+
+    for (const wall of walls) {
+        // make the closest point to viewer on line the origin
+        const movedWallStartX = wall.start.x - closestX;
+        const movedWallStartY = wall.start.y - closestY;
+        const movedWallEndX = wall.end.x - closestX;
+        const movedWallEndY = wall.end.y - closestY;
+
+        // rotate wall about origin (closest point to viewer) by angle from closest point to viewer on line
+        let rotatedWallStartX = movedWallStartX * cosRotateAngle  -  movedWallStartY * sinRotateAngle;
+        let rotatedWallStartY = movedWallStartX * sinRotateAngle  +  movedWallStartY * cosRotateAngle;
+        let rotatedWallEndX = movedWallEndX * cosRotateAngle  -  movedWallEndY * sinRotateAngle;
+        let rotatedWallEndY = movedWallEndX * sinRotateAngle  +  movedWallEndY * cosRotateAngle;
+
+        //console.info(`${rotatedWallStartX}, ${rotatedWallStartY}`);
+
+        if (rotatedWallStartY < 0 && rotatedWallEndY < 0) continue; // wall is behind line
+        if (rotatedWallStartY > rotatedVY && rotatedWallEndY > rotatedVY) continue; // wall is behind viewer
+
+        // cut off regions of the wall that are behind the line or the viewer
+        const wallSlope = (rotatedWallEndY - rotatedWallStartY) / (rotatedWallEndX - rotatedWallStartX);
+
+        if (rotatedWallStartY < 0) {
+            rotatedWallStartX = (0 - rotatedWallStartY)/wallSlope + rotatedWallStartX;
+            rotatedWallStartY = 0;
+        } else if (rotatedWallStartY > rotatedVY) {
+            rotatedWallStartX = (rotatedVY - rotatedWallStartY)/wallSlope + rotatedWallStartX;
+            rotatedWallStartY = rotatedVY;
+        }
+
+        if (rotatedWallEndY < 0) {
+            rotatedWallEndX = (0 - rotatedWallEndY)/wallSlope + rotatedWallEndX;
+            rotatedWallEndY = 0;
+        } else if (rotatedWallEndY > rotatedVY) {
+            rotatedWallEndX = (rotatedVY - rotatedWallEndY)/wallSlope + rotatedWallEndX;
+            rotatedWallEndY = rotatedVY;
+        }
+
+        //if (!(vx == 300 && vy == 700))console.info(`${rotatedWallStartX}, ${rotatedWallEndX}`);
+
+        // find shadow bounds on x-axis
+        const viewerWallStartSlope = (rotatedVY - rotatedWallStartY) / (rotatedVX - rotatedWallStartX);
+        let shadowStartX = (0 - rotatedVY) / viewerWallStartSlope;
+
+        const viewerWallEndSlope = (rotatedVY - rotatedWallEndY) / (rotatedVX - rotatedWallEndX);
+        let shadowEndX = (0 - rotatedVY) / viewerWallEndSlope;
+
+        //if (!(vx == 300 && vy == 700)) console.info(`${viewerWallStartSlope}, ${Object.is(viewerWallEndSlope, +0)}`); 
+        //if (!(vx == 300 && vy == 700)) console.info(`${shadowStartX}, ${shadowEndX}`); 
+        
+        if (shadowStartX > shadowEndX) {
+            const temp = shadowEndX;
+            shadowEndX = shadowStartX;
+            shadowStartX = temp;
+        }
+
+        if (shadowStartX <= lineEnd && shadowEndX >= lineStart)
+            shadows.add([ shadowStartX, shadowEndX ]);
+    }
+
+    //if (!(vx == 300 && vy == 700)) console.log(shadows.elements.reduce((prev, cur) => prev + `[${cur[0]}, ${cur[1]}] `, ""))
+
+    // test if shadows cover entire line
+    let mergedShadowEnd = lineStart;
+
+    for (const shadow of shadows.elements) {
+        if (shadow[0] > mergedShadowEnd) return true; // hole in shadows
+
+        mergedShadowEnd = Math.max(mergedShadowEnd, shadow[1]);
+        if (mergedShadowEnd >= lineEnd) return false; // shadows cover everything
+    };
+
+    return true; // shadows don't cover up to right edge
 }
 
 exports.circleLineOfSight = circleLineOfSight;
+exports.lineLineOfSight = lineLineOfSight;

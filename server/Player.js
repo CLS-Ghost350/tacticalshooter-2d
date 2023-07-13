@@ -75,6 +75,8 @@ module.exports = class Player extends GameObject {
 
         this.updateBow(); 
         this.updateKnives(); 
+
+        //this.isVisibleFrom(300, 700); // debug
     }
 
     updateBow() {

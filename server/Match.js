@@ -45,7 +45,8 @@ module.exports = class Match {
         });
 
          // walls
-         const map = JSON.parse(fs.readFileSync(path.join(__dirname, "maps", "test2.json"), "utf8"));
+         const mapName = "test2.json"
+         const map = JSON.parse(fs.readFileSync(path.join(__dirname, "maps", mapName), "utf8"));
 
          for (const wall of map.walls) {
             this.walls.push(new Wall(this, ...wall));
