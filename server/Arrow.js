@@ -9,7 +9,7 @@ module.exports = class Arrow extends GameObject {
     angle;
     #velocity = 70;
 
-    #despawnTimer = 1000;
+    #despawnTimer = 60;
 
     #cosAngle;
     #sinAngle;
@@ -17,9 +17,9 @@ module.exports = class Arrow extends GameObject {
     get FRICTION_MUL() { return 0.3; }
     get FRICTION_SUB() { return 400; }
 
-    get STOPPED_DESPAWN_TIME() { return 5; }
-    get AIR_DESPAWN_TIME() { return 10; }
-    get HIT_WALL_DESPAWN_TIME() { return 300; }
+    get STOPPED_DESPAWN_TIME() { return 0.25; }
+    get AIR_DESPAWN_TIME() { return 0.5; }
+    get HIT_WALL_DESPAWN_TIME() { return 15; }
 
     get HIT_PLAYER_VEL_MUL() { return 0.125; }
 
@@ -41,7 +41,7 @@ module.exports = class Arrow extends GameObject {
 
     update(TIME_SINCE) {
         if (this.#velocity == 0) {
-            this.#despawnTimer--;
+            this.#despawnTimer -= TIME_SINCE;
 
             if (this.#despawnTimer < 0) 
                 return this.destroy();
@@ -76,9 +76,12 @@ module.exports = class Arrow extends GameObject {
 
         if (coll) {
             //console.log(coll)
-
-            this.position.x = coll.x;
-            this.position.y = coll.y;
+             
+            if (util.pointsDistance(coll.x, coll.y, newX, newY) < 
+                util.pointsDistance(this.position.x, this.position.y, newX, newY)) {    
+                this.position.x = coll.x;
+                this.position.y = coll.y;
+            }
 
             if (coll.isPlayer) {
                 coll.object.kill();

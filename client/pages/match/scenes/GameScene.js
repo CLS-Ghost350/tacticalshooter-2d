@@ -25,6 +25,8 @@ export default class GameScene extends Phaser.Scene {
     #arrows = {};
     #grenades = {};
 
+    #debugPoints = {};
+
     get players() { return this.#players; }
 
     walls = [];
@@ -57,7 +59,9 @@ export default class GameScene extends Phaser.Scene {
         }); 
         
         this.debug = this.add.graphics();
-        //this.debug.setDepth(100000);
+        this.debug.setDepth(100000);
+
+        this.wallGraphics = this.add.graphics();
 
         this.visibilityGraphics = this.add.graphics();
         this.visibilityGraphics.setVisible(false);
@@ -89,11 +93,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     update(time,delta) {
-        this.debug.clear();
-
-        const mouseWorldX = Math.round(this.input.activePointer.x + this.cameras.main.worldView.left);
-        const mouseWorldY = Math.round(this.input.activePointer.y + this.cameras.main.worldView.top);
-        document.getElementById("coords").innerText = `(${mouseWorldX}, ${mouseWorldY})`;
+        this.updateDebug(delta)
 
         //this.cameras.main.setZoom(window.innerWidth / 1920); // 1920 width
         this.ZOOM_SCALE = this.cameras.main.width/2 * 0.6;
@@ -155,7 +155,7 @@ export default class GameScene extends Phaser.Scene {
 
             if (!player) {
                 console.info({ "PLAYER JOINED": msg });
-                this.#players[msg.id] = new Player(this,msg.x,msg.y,msg.angle,msg.id == socket.id, msg.team);
+                this.#players[msg.id] = new Player(this,msg.x,msg.y,msg.angle,msg.socketId == socket.id, msg.team);
 
                 if (msg.socketId == socket.id) {
                     this.#players.main = this.#players[msg.id];
@@ -236,6 +236,32 @@ export default class GameScene extends Phaser.Scene {
             this.#grenades[msg.id].destroy();
             delete this.#grenades[msg.id];
         })
+
+        socket.on("debugPoint", msg => {
+            this.#debugPoints[msg.id] = msg;
+        });
+    }
+
+    updateDebug(deltaTime) {
+        this.debug.clear();
+
+        const mouseWorldX = Math.round(this.input.activePointer.x + this.cameras.main.worldView.left);
+        const mouseWorldY = Math.round(this.input.activePointer.y + this.cameras.main.worldView.top);
+        document.getElementById("coords").innerText = `(${mouseWorldX}, ${mouseWorldY})`;
+
+        for (const debugPoint of Object.values(this.#debugPoints)) {
+            if (debugPoint.hasOwnProperty("expiryTime")) {
+                if (debugPoint.expiryTime <= 0) {
+                    delete this.#debugPoints[debugPoint.id];
+                    continue;
+                }
+
+                debugPoint.expiryTime -= deltaTime / 1000;
+            }
+
+            this.debug.fillStyle(debugPoint.color ?? 0x0000FF);
+            this.debug.fillCircle(debugPoint.x, debugPoint.y, debugPoint.radius ?? 3)
+        }
     }
 
     updateZoomDist(zooming, zoomCurve) {
@@ -266,10 +292,12 @@ export default class GameScene extends Phaser.Scene {
     }
 
     displayWalls() {
-        this.debug.lineStyle(2,"0xfc0303",1);
+        this.wallGraphics.clear();
+
+        this.wallGraphics.lineStyle(2,"0xfc0303",1);
 
         for (const wall of this.walls) {
-            this.debug.lineBetween(...wall);
+            this.wallGraphics.lineBetween(...wall);
         }
     }
 
@@ -283,15 +311,15 @@ export default class GameScene extends Phaser.Scene {
 
             let offsetX, offsetY;
 
-            if (player.mainPlayer)
-                [ offsetX, offsetY ] = this.calcZoomOffset(this.zoomDist, this.mouseAngle);
-            else
-                [ offsetX, offsetY ] = this.calcZoomOffset(player.zoomDist, player.rotation);
+            if (player.mainPlayer) {
+                offsetX = this.cameras.main.worldView.centerX - player.x;
+                offsetY = this.cameras.main.worldView.centerY - player.y;
+            } else [ offsetX, offsetY ] = this.calcZoomOffset(player.zoomDist, player.rotation);
 
-            const viewTop = player.y - this.cameras.main.height/2 + offsetY;
-            const viewLeft = player.x - this.cameras.main.width/2 + offsetX;
-            const viewBottom = player.y + this.cameras.main.height/2 + offsetY;
-            const viewRight = player.x + this.cameras.main.width/2 + offsetX;
+            const viewTop = player.y - this.cameras.main.height/2 + offsetY - 10;
+            const viewLeft = player.x - this.cameras.main.width/2 + offsetX - 10;
+            const viewBottom = player.y + this.cameras.main.height/2 + offsetY + 10;
+            const viewRight = player.x + this.cameras.main.width/2 + offsetX + 10;
 
             let walls = this.unintersectingWalls;
 

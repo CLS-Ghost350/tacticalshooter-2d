@@ -16,7 +16,7 @@ function degreesToRadians(degrees) {
 }
 
 function radiansToDegrees(radians) {
-    return radians / ( 180 / Math.PI);
+    return radians / ( Math.PI / 180 );
 }
 
 function angleOverflowCheckRadians(angle) {

@@ -13,6 +13,8 @@ module.exports = class Match {
     TIME_PER_TICK = 1000 / this.CORRECT_TPS; 
     MAX_TIME_BT_TICK = this.TIME_PER_TICK*2 - 3; 
 
+    SLOW_MODE_SLOWDOWN = 1;
+
     CLIENT_PATH = path.join(__dirname,"..","client"); 
     DEV_MODE = process.argv[1] == "dev"; 
 
@@ -45,7 +47,7 @@ module.exports = class Match {
         });
 
          // walls
-         const mapName = "test2.json"
+         const mapName = "test2.json"//"testMap.json"//"test2.json"
          const map = JSON.parse(fs.readFileSync(path.join(__dirname, "maps", mapName), "utf8"));
 
          for (const wall of map.walls) {
@@ -85,6 +87,10 @@ module.exports = class Match {
         
     }
 
+    emitDebugPoint(msg) {
+        this.namespace.emit("debugPoint", msg);
+    }
+
     #update = DELTA_TIME => {
         //GameObject.testCollisions()
 
@@ -113,16 +119,16 @@ module.exports = class Match {
     #gameLoop = () => {
         if (this.#_stopGameLoop) return;
 
-        let DELTA_TIME = Date.now() - this.#time;
+        let DELTA_TIME = (Date.now() - this.#time) / this.SLOW_MODE_SLOWDOWN;
         if (DELTA_TIME > this.MAX_TIME_BT_TICKS) DELTA_TIME = this.MAX_TIME_BT_TICKS;
         this.#time = Date.now();
 
         this.#_realTPSCounter++;
         this.#update(DELTA_TIME/1000);
 
-        const updateTime = Date.now() - this.#time;
+        const updateTime = (Date.now() - this.#time) / this.SLOW_MODE_SLOWDOWN;
         //console.debug(updateTime);
-        setTimeout(this.#gameLoop, this.TIME_PER_TICK - updateTime-4);
+        setTimeout(this.#gameLoop, (this.TIME_PER_TICK - updateTime-4) * this.SLOW_MODE_SLOWDOWN);
     }
 
     #startGameLoop = () => {

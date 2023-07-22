@@ -8,7 +8,7 @@ const BouncingThrowable = require("./BouncingThrowable.js");
 module.exports = class Grenade extends BouncingThrowable {
     static RADIUS = 10;
     static FRICTION_SUB = 2000;
-    static EXPLOSION_TIME = 0.5;
+    static EXPLOSION_TIME = 1.5;
 
     #explosionTimer;
 

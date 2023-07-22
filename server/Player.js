@@ -21,7 +21,7 @@ module.exports = class Player extends GameObject {
     ROTATION_DECCEL = 1.1; // above 1
     ROTATION_FRICTION = 3.4868 * 10**(-11)//0.3;
 
-    BOW_DRAW_TIME = 12;//15;
+    BOW_DRAW_TIME = 0.6;
     BOW_DRAW_VEL_CURVE = bezier(1,0,1,0.2);
     get ARROW_VEL() { return 4000; }
 
@@ -36,6 +36,8 @@ module.exports = class Player extends GameObject {
     bowDrawStatus = 0;
 
     alive = true;
+
+    shotLast = false;
 
     constructor(match, connection) {
         super(match, "player");
@@ -73,13 +75,16 @@ module.exports = class Player extends GameObject {
         this.moveCollideWalls(deltaTime);
         this.updateRotation(deltaTime);
 
-        this.updateBow(); 
+        this.updateBow(deltaTime); 
         this.updateKnives(); 
 
         //this.isVisibleFrom(300, 700); // debug
+
+        if (this.connection.keyStates.includes("shoot")) this.shotLast = true;
+        else this.shotLast = false;
     }
 
-    updateBow() {
+    updateBow(deltaTime) {
         if (this.connection.weaponSelected != "bow") {
             if (this.bowDrawStatus > 0) {
                 this.match.namespace.emit("bowDrawStop",{ playerID: this.id });
@@ -91,7 +96,7 @@ module.exports = class Player extends GameObject {
 
         if (this.connection.keyStates.includes("shoot")) { // holding shoot button (right-click)
             if (this.bowDrawStatus == 0) this.match.namespace.emit("bowDraw",{ playerID: this.id }) // start drawing
-            if (this.bowDrawStatus < this.BOW_DRAW_TIME) this.bowDrawStatus += 1; // increase time drawn
+            if (this.bowDrawStatus < this.BOW_DRAW_TIME) this.bowDrawStatus += deltaTime; // increase time drawn
         } else if (this.bowDrawStatus > 0) { 
             const velMul = Math.min(1, this.BOW_DRAW_VEL_CURVE(this.bowDrawStatus / this.BOW_DRAW_TIME));
 
@@ -100,8 +105,8 @@ module.exports = class Player extends GameObject {
 
                 const arrow = new Arrow(
                     this.match, 
-                    this.position.x + Math.cos(radianAngle) * this.RADIUS*1.7, 
-                    this.position.y + Math.sin(radianAngle) * this.RADIUS*1.7, 
+                    this.position.x + Math.cos(radianAngle) * this.RADIUS*1, 
+                    this.position.y + Math.sin(radianAngle) * this.RADIUS*1, 
                     this.angle, 
                     this.ARROW_VEL * velMul, 
                     this.connection.team
@@ -117,7 +122,7 @@ module.exports = class Player extends GameObject {
         if (this.connection.weaponSelected != "knives") 
             return;
         
-        if (this.connection.keyStates.includes("shoot")) {
+        if (this.connection.keyStates.includes("shoot") && !this.shotLast) {
             const grenade = new Grenade(
                 this.match, 
                 this.position.x, 
@@ -173,6 +178,8 @@ module.exports = class Player extends GameObject {
     moveCollideWalls(deltaTime) {
         // code could prob be better, but IT WORKS!!!!
         // run after velocity is updated, before movement is updated
+
+        // if velocity is *very fast* a collision will be triggered when running past the edge
 
         const moveX = this.vel.x * deltaTime;
         const moveY = this.vel.y * deltaTime;
@@ -236,7 +243,7 @@ module.exports = class Player extends GameObject {
             const collideMoveX = Math.cos(playerToWallAngle)*perpMoveCollide + Math.cos(playerToWallAnglePerp)*parallelMove;
             const collideMoveY = Math.sin(playerToWallAngle)*perpMoveCollide + Math.sin(playerToWallAnglePerp)*parallelMove;
 
-            //console.log(Math.round(collideMoveX*10)/10 + " " + Math.round(collideMoveY*10)/10)
+            //if (perpMoveCollide != perpMove) console.log(Math.round(collideMoveX*10)/10 + " " + Math.round(collideMoveY*10)/10)
 
             minMoveX = Math.min(collideMoveX * (-Math.sign(moveX)), minMoveX);
             minMoveY = Math.min(collideMoveY * (-Math.sign(moveY)), minMoveY);
