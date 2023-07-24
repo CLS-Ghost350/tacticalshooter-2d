@@ -52,6 +52,11 @@ function pointCircle(px, py, cx, cy, r) {
     return false;
 }
 
+function circleCircle(x1, y1, r1, x2, y2, r2) {
+    const distance = util.pointsDistance(x1,y1,x2,y2);
+    return distance <= r1 + r2;
+}
+
 function linePoint(x1, y1, x2, y2, px, py, len) {
     // returns true or false
 
@@ -159,6 +164,7 @@ module.exports = {
     lineCircle,
     linePoint,
     pointCircle,
+    circleCircle,
     closestPointOnLine,
     pointTriangle
 }

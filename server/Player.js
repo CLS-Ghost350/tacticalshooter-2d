@@ -128,7 +128,8 @@ module.exports = class Player extends GameObject {
                 this.position.x, 
                 this.position.y,
                 this.angle, 
-                this.connection.zoomDist*690*2
+                this.connection.zoomDist*690*2,
+                this.connection.team
             );
         }
     }
