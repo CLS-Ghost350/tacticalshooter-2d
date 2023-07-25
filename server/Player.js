@@ -50,6 +50,7 @@ module.exports = class Player extends GameObject {
 
     getUpdateData() {
         return {
+            type: "player",
             x: this.position.x, 
             y: this.position.y,
             angle: this.angle,
@@ -60,9 +61,9 @@ module.exports = class Player extends GameObject {
         };
     }
 
-    emitUpdate(socket) {
-        socket.emit("player", this.getUpdateData());
-    }
+    // emitUpdate(socket) {
+    //     socket.emit("gameObject", this.getUpdateData());
+    // }
 
     isVisibleFrom(x, y) {
         return lineOfSight.circleLineOfSight(x, y, this.position.x, this.position.y, this.RADIUS, this.match.walls)

@@ -20,9 +20,9 @@ export default function Main(props) {
             }
         }
 
-        socket.on("playerLeft", listener);
+        socket.on("gameObjectDestroy", listener);
 
-        return () => socket.off('playerLeft', listener);
+        return () => socket.off('gameObjectDestroy', listener);
     });
 
 

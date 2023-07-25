@@ -3,6 +3,7 @@ const GameObject = require("./GameObject.js");
 const Player = require("./Player.js");
 const util = require("../shared/util");
 const collisions = require("../shared/collisions");
+const lineOfSight = require("./lineOfSight");
 const BouncingThrowable = require("./BouncingThrowable.js");
 
 module.exports = class Grenade extends BouncingThrowable {
@@ -28,6 +29,8 @@ module.exports = class Grenade extends BouncingThrowable {
 
         this.team = team;
 
+        match.teams[team].obstructableObjects[this.id] = this;
+
         this.#explosionTimer = Grenade.EXPLOSION_TIME;
     }
 
@@ -39,16 +42,25 @@ module.exports = class Grenade extends BouncingThrowable {
 
         super.update(TIME_SINCE);
 
-        this.emitUpdate(this.match.namespace);
+        //this.emitUpdate(this.match.namespace);
     }
 
-    emitUpdate(socket) {
-        socket.emit("grenade",{ 
+    getUpdateData() {
+        return { 
+            type: "grenade",
             id: this.id, 
             x: this.position.x, 
             y: this.position.y, 
             angle: this.angle
-        });
+        };
+    }
+
+    // emitUpdate(socket) {
+    //     socket.emit("gameObject", this.getUpdateData());
+    // }
+
+    isVisibleFrom(x, y) {
+        return lineOfSight.circleLineOfSight(x, y, this.position.x, this.position.y, Grenade.RADIUS, this.match.walls)
     }
 
     explode() {
@@ -66,8 +78,9 @@ module.exports = class Grenade extends BouncingThrowable {
     }
 
     destroy() {
-        this.emitUpdate(this.match.namespace);
-        this.match.namespace.emit("grenadeDestory",{ id: this.id });
+        //this.emitUpdate(this.match.namespace);
+        this.match.namespace.emit("gameObjectDestroy",{ id: this.id });
+        delete this.match.teams[this.team].obstructableObjects[this.id];
         super.destroy();
     }
 }

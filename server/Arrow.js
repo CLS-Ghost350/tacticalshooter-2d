@@ -49,7 +49,8 @@ module.exports = class Arrow extends GameObject {
             this.updatePosition(TIME_SINCE);
         }
 
-        this.match.namespace.emit("arrow",{ 
+        this.match.namespace.emit("gameObject",{ 
+            type: "arrow",
             id: this.id, 
             x: this.position.x, 
             y: this.position.y, 
@@ -153,7 +154,7 @@ module.exports = class Arrow extends GameObject {
     }
 
     destroy() {
-        this.match.namespace.emit("arrowDestory",{ id: this.id });
+        this.match.namespace.emit("gameObjectDestroy",{ id: this.id });
         super.destroy();
     }
 }

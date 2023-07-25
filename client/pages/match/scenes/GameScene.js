@@ -21,13 +21,20 @@ import { subscribeActionAfter, subscribeAfter } from 'redux-subscribe-action';
 
 export default class GameScene extends Phaser.Scene {
     #gameInited = false;
-    #players = {};
-    #arrows = {};
-    #grenades = {};
+
+    gameObjectClasses = {
+        "player": Player,
+        "arrow": Arrow,
+        "grenade": Grenade
+    }
+
+    updatingGameObjects = {};
+
+    players = {};
+    arrows = {};
+    grenades = {};
 
     #debugPoints = {};
-
-    get players() { return this.#players; }
 
     walls = [];
     unintersectingWalls = [];
@@ -105,17 +112,17 @@ export default class GameScene extends Phaser.Scene {
     
         this.displayWalls();
 
-        if (this.#players.main) {
+        if (this.players.main) {
             const keyStates = keyHandler.keyStates;
 
-            //if (keyStates.has("debugTest")) this.#players.main.setPosition(1000, 500);
-            //else this.#players.main.setPosition(0, 500);
-            //console.log({player: this.#players.main.x, camera: this.cameras.main.worldView.centerX});
+            //if (keyStates.has("debugTest")) this.players.main.setPosition(1000, 500);
+            //else this.players.main.setPosition(0, 500);
+            //console.log({player: this.players.main.x, camera: this.cameras.main.worldView.centerX});
 
             //console.log(this.cameras.main.scrollX)
             
             //this.debug.fillStyle(0x00ff00, 1);
-            //this.debug.fillPoint(this.#players.main.x + offsetX, this.#players.main.y + offsetY, 5);
+            //this.debug.fillPoint(this.players.main.x + offsetX, this.players.main.y + offsetY, 5);
             //this.debug.fillStyle(0x0000ff, 1);
             //this.debug.fillPoint(this.cameras.main.worldView.centerX, this.cameras.main.worldView.centerY, 5);
 
@@ -145,97 +152,33 @@ export default class GameScene extends Phaser.Scene {
     #handleSocket() {
         socket.removeAllListeners();
 
+        socket.on("gameObject", msg => {
+            if (!this.updatingGameObjects[msg.id]) 
+                this.updatingGameObjects[msg.id] = new this.gameObjectClasses[msg.type](this, msg);
+
+            this.updatingGameObjects[msg.id].handleServerUpdate(msg);
+        });
+
+        socket.on("gameObjectDestroy", msg => {
+            if (!this.updatingGameObjects[msg.id])
+                return console.warn("GAMEOBJECT TO DESTROY DOES NOT EXIST: " + msg.id );
+
+            this.updatingGameObjects[msg.id].handleServerDestroy(msg);
+            delete this.updatingGameObjects[msg.id];
+        });
+
         socket.on("objectObstructed", ({ id }) => {
-            this.#players[id]?.setVisible(false);
-        });
-
-        socket.on("player",msg => {
-            console.debug("test")
-            const player = this.#players[msg.id];
-
-            if (!player) {
-                console.info({ "PLAYER JOINED": msg });
-                this.#players[msg.id] = new Player(this,msg.x,msg.y,msg.angle,msg.socketId == socket.id, msg.team);
-
-                if (msg.socketId == socket.id) {
-                    this.#players.main = this.#players[msg.id];
-                    this.cameras.main.startFollow(this.#players.main, false, 0.9, 0.9);
-                }
-
-                store.dispatch(addPlayer({ player: { team: this.#players[msg.id].team } })); // the 'player' connections aren't linked w/ the physical players
-            } else {
-                player.setPosition(msg.x,msg.y);
-                //console.log(msg.x + " " + msg.y);
-                player.angle = msg.angle;
-                player.team = msg.team;
-                player.zoomDist = msg.zoomDist;
-                this.#players[msg.id].setVisible(true);
-            }
-        });
-
-        socket.on("playerLeft", msg => {
-            if (!this.#players[msg.id])
-                return console.warn({ "LEFT PLAYER DOES NOT EXIST": msg.id });
-
-            console.info({ "PLAYER LEFT": msg });
-            if (this.#players[msg.id].mainPlayer) {
-                //setTimeout(() => window.location.reload(), 2000);
-            }
-
-            store.dispatch(removePlayer({ player: { team: this.#players[msg.id].team } }));
-
-            this.#players[msg.id].kill();
-            delete this.#players[msg.id];
-
-            if (this.#players.main.id == msg.id)
-                delete this.#players.main;
+            this.players[id]?.setVisible(false);
+            this.grenades[id]?.setVisible(false);
         });
 
         socket.on("bowDraw",msg => {
-            this.#players[msg.playerID]?.bow.playAnimation();
+            this.players[msg.playerID]?.bow.playAnimation();
         });
 
         socket.on("bowDrawStop",msg => {
-            this.#players[msg.playerID]?.bow.stopAnimation();
+            this.players[msg.playerID]?.bow.stopAnimation();
         });
-
-        socket.on("arrow",msg => {
-            const arrow = this.#arrows[msg.id];
-
-            if (!arrow) this.#arrows[msg.id] = new Arrow(this,msg.x,msg.y,msg.angle);
-            
-            else {
-                arrow.angle = msg.angle;
-                arrow.setPosition(msg.x, msg.y);
-            }
-        });
-
-        socket.on("arrowDestory",msg => {
-            if (!this.#arrows[msg.id])
-                return console.warn({ "TO DESTROY ARROW DOES NOT EXIST": msg.id });
-
-            this.#arrows[msg.id].fadeOutDestroy();
-            delete this.#arrows[msg.id];
-        })
-
-        socket.on("grenade",msg => {
-            const grenade = this.#grenades[msg.id];
-
-            if (!grenade) this.#grenades[msg.id] = new Grenade(this,msg.x,msg.y,0);
-            
-            else {
-                //grenade.angle = msg.angle;
-                grenade.setPosition(msg.x, msg.y);
-            }
-        });
-
-        socket.on("grenadeDestory",msg => {
-            if (!this.#grenades[msg.id])
-                return console.warn({ "TO DESTROY GRENADE DOES NOT EXIST": msg.id });
-
-            this.#grenades[msg.id].destroy();
-            delete this.#grenades[msg.id];
-        })
 
         socket.on("debugPoint", msg => {
             this.#debugPoints[msg.id] = msg;
@@ -305,8 +248,8 @@ export default class GameScene extends Phaser.Scene {
         this.visibilityGraphics.fillStyle(0xff0000);
         this.visibilityGraphics.clear();
 
-        for (const player of Object.values(this.#players)) {
-            if (player.team != this.#players.main?.team)
+        for (const player of Object.values(this.players)) {
+            if (player.team != this.players.main?.team)
                 continue;
 
             let offsetX, offsetY;
@@ -360,16 +303,22 @@ export default class GameScene extends Phaser.Scene {
         //if (this.visibilityMask) this.visibilityMask.destroy();
         this.visibilityMask = this.visibilityGraphics.createGeometryMask();
 
-        for (const player of Object.values(this.#players)) {
+        for (const player of Object.values(this.players)) {
             //player.clearMask();
             player.setMask(this.visibilityMask);
             player.bow.setMask(this.visibilityMask);
         }
 
-        for (const arrow of Object.values(this.#arrows)) {
+        for (const arrow of Object.values(this.arrows)) {
             //arrow.clearMask();
             arrow.setMask(this.visibilityMask);
         }
+
+        // for (const grenade of Object.values(this.grenades)) {
+        //     if (grenade.team)
+        //     //grenade.clearMask();
+        //     grenade.setMask(this.visibilityMask);
+        // }
 
         this.shadowsVisibilityMask = this.visibilityGraphics.createGeometryMask();
         this.shadowsVisibilityMask.setInvertAlpha();

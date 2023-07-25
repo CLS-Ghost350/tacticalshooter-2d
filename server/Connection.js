@@ -72,7 +72,7 @@ module.exports = class Connection {
     killPlayer() {
         delete this.match.teams[this.team].viewers[this.player.id];
         delete this.match.teams[this.team].obstructableObjects[this.player.id];
-        this.match.namespace.emit("playerLeft",{ id: this.player.id, socketId: this.ID });
+        this.match.namespace.emit("gameObjectDestroy",{ id: this.player.id, socketId: this.ID });
         this.player = null;
     }
 
