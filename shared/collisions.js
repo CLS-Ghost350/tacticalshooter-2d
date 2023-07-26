@@ -215,6 +215,109 @@ function movingCircleCircle(x, y, radius, moveX, moveY, cx, cy, cRadius) {
     };
 }
 
+function movingCircleLine(cx, cy, radius, moveX, moveY, wx1, wy1, wx2, wy2) {
+    const newX = cx + moveX;
+    const newY = cy + moveY;
+
+
+    const dwx = wx2 - wx1;
+    const dwy = wy2 - wy1;
+
+    const wlen = Math.sqrt(dwx**2 + dwy**2);
+    const wAngle = Math.atan2(dwy, dwx);
+
+    // make wall endpoint 1 the origin
+    const movedX = cx - wx1;
+    const movedY = cy - wy1;
+
+    const movedNewX = newX - wx1;
+    const movedNewY = newY - wy1;
+
+    // rotate about origin (wall endpoint 1) by wall angle; x-axis becomes wall
+    const cosNegWallAngle = Math.cos(-wAngle);
+    const sinNegWallAngle = Math.sin(-wAngle);
+
+    const rotatedX = movedX * cosNegWallAngle  -  movedY * sinNegWallAngle; 
+    let rotatedY = movedX * sinNegWallAngle  +  movedY * cosNegWallAngle; 
+
+    const rotatedNewX = movedNewX * cosNegWallAngle  -  movedNewY * sinNegWallAngle; 
+    let rotatedNewY = movedNewX * sinNegWallAngle  +  movedNewY * cosNegWallAngle; 
+
+    let flipped = false;
+
+    if (rotatedY < 0) {
+        flipped = true;
+
+        rotatedY *= -1;
+        rotatedNewY *= -1;
+    }
+
+    const rotatedMoveX = rotatedNewX - rotatedX;
+    const rotatedMoveY = rotatedNewY - rotatedY;
+
+    // this.match.emitDebugPoint({ id: "BT_rotatedPos", x: rotatedX, y: -rotatedY  +400, color: 0xFF00FF })
+    // this.match.emitDebugPoint({ id: "BT_rotatedNewPos", x: rotatedNewX, y: -rotatedNewY  +400, color: 0xFF00FF })
+
+    // this.match.emitDebugPoint({ id: "BT_rotatedWall1", x: 0, y: 0  +400, color: 0xFF0000 })
+    // this.match.emitDebugPoint({ id: "BT_rotatedWall2", x: wlen, y: 0  +400, color: 0xFF0000 })
+
+    if (Math.min(rotatedY, rotatedNewY) > radius) return null; // no intersection
+    if (rotatedMoveY == 0 && rotatedY > radius) return null; // parallel movement path
+
+    // find x pos on movement line when y pos = radius
+    let xAtRadius = (radius - rotatedY) * rotatedMoveX / rotatedMoveY + rotatedX;
+
+    // this.match.emitDebugPoint({ id: "BT_xAtRadius", x: xAtRadius, y: -this.radius  +400, color: 0x00FF00 })
+
+    //console.log(xAtRadius + " " + wlen)
+
+    if (xAtRadius < 0 || xAtRadius > wlen || rotatedY <= radius) {
+        // circle will first collide with one of the line's endpoints
+
+        let collX = wx1;
+        let collY = wy1;
+
+        if (rotatedY <= this.radius) { // xAtRadius will be behind object's movement
+            if (rotatedX > wlen) {
+                collX = wx2;
+                collY = wy2;
+            }
+        } else if (xAtRadius > wlen) {
+            collX = wx2;
+            collY = wy2;
+        }
+
+        // this.match.emitDebugPoint({ id: "BT_wallEndpointColl", x: collX, y: -collY  +400, color: 0xFFFF00, expiryTime: 1 })
+
+        const coll = movingCircleCircle(
+            cx, cy, radius,
+            moveX, moveY, 
+            collX, collY, 0
+        );
+
+        if (!coll) return null;
+        return { ...coll, collAngle: Math.atan2(collY - coll.y, collX - coll.x) };
+
+    } else { // closest point on line segment
+        const distance = util.pointsDistance(rotatedX, rotatedY, xAtRadius, radius);
+        const moveDist = Math.atan2(moveY, moveX);
+        const movePercent = distance / moveDist;
+   
+        return { 
+            x: cx + moveX*movePercent, 
+            y: cy + moveY*movePercent, 
+            dist: distance,
+            collAngle: wAngle + Math.PI/2
+        };
+    }
+
+    //this.match.emitDebugPoint({ id: "BT_closest", x: closestX, y: closestY, color: 0x00FF00 })
+        
+
+    // if (minMoveWallAngle) console.log(minMove);
+    // else console.log("no coll " + moveDist)
+}
+
 module.exports = {
     lineLine,
     lineCircle,
@@ -225,5 +328,6 @@ module.exports = {
 
     closestPointOnLine,
 
-    movingCircleCircle
+    movingCircleCircle,
+    movingCircleLine
 }
