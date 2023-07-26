@@ -148,7 +148,8 @@ module.exports = class Player extends GameObject {
                 this.position.x, 
                 this.position.y, 
                 this.angle, 
-                this.connection.team
+                this.connection.team,
+                this.connection.ID
             );
         }
     }

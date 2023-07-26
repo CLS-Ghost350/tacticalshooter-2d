@@ -7,7 +7,7 @@ const lineOfSight = require("./lineOfSight");
 module.exports = class Fireball extends GameObject {
     static RADIUS = 11;
     static EXPLOSION_RADIUS = 30;
-    static VELOCITY = 500;
+    static VELOCITY = 600;
 
     //static FRICTION_SUB = 2000;
     //static FRICTION_MUL = 1;
@@ -19,10 +19,11 @@ module.exports = class Fireball extends GameObject {
     #moveX;
     #moveY;
 
-    constructor(match, x, y, angle, team) {
+    constructor(match, x, y, angle, team, playerID) {
         super(match, "fireball")
 
         this.team = team;
+        this.playerID = playerID;
         this.angle = angle;
 
         const radianAngle = util.degreesToRadians(angle);
@@ -32,7 +33,7 @@ module.exports = class Fireball extends GameObject {
         this.position.x = x;
         this.position.y = y;
 
-        this.moveHandleCollisions(0.06);
+        this.moveHandleCollisions(0.05);
 
         //match.teams[team].obstructableObjects[this.id] = this;
     }
@@ -81,6 +82,28 @@ module.exports = class Fireball extends GameObject {
                 moveX, moveY,
                 wall.start.x, wall.start.y,
                 wall.end.x, wall.end.y
+            );
+
+            if (!coll) continue;
+
+            if (coll.dist < minMove) {
+                minMove = coll.dist;
+                minMoveNewX = coll.x;
+                minMoveNewY = coll.y;
+            }
+        }
+
+        for (const conn of Object.values(this.match.connections)) {
+            if (!conn.player) continue;
+            if (conn.ID == this.playerID) continue;
+            //if (conn.team == this.team) continue;
+
+            const coll = collisions.movingCircleCircle(
+                this.position.x, this.position.y,
+                Fireball.RADIUS,
+                moveX, moveY,
+                conn.player.position.x, conn.player.position.y,
+                conn.player.RADIUS
             );
 
             if (!coll) continue;
