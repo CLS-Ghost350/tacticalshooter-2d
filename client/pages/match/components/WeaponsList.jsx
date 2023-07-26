@@ -13,8 +13,9 @@ import { setGameState } from '../storeSlices/gameSlice';
 import { useState } from "react";
 
 const weapons = [
-    { id: "knives", display: "Throwing Knives", img: "settingsIcon.png", max: 8 },
-    { id: "fireballs", display: "Fireballs", img: "settingsIcon.png", max: 5 },
+    //{ id: "knives", display: "Throwing Knives", img: "settingsIcon.png", max: 8 },
+    { id: "grenade", display: "Grenades", img: "settingsIcon.png", max: 3 },
+    { id: "fireball", display: "Fireballs", img: "settingsIcon.png", max: 3 },
     { id: "bow", display: "Bow", img: "settingsIcon.png", max: -1 }
 ]
 

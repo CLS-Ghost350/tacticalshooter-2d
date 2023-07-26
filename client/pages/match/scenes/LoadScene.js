@@ -27,6 +27,13 @@ export default class LoadScene extends Phaser.Scene {
             margin: 0,
             spacing: 0
         })
+
+        this.load.spritesheet("fireballSpritesheet",asset("fireballSpritesheet.png"),{
+            frameWidth: 32,
+            frameHeight: 16,
+            margin: 1,
+            spacing: 2
+        })
     }
 
     create() {

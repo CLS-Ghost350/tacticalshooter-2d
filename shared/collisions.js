@@ -300,7 +300,7 @@ function movingCircleLine(cx, cy, radius, moveX, moveY, wx1, wy1, wx2, wy2) {
 
     } else { // closest point on line segment
         const distance = util.pointsDistance(rotatedX, rotatedY, xAtRadius, radius);
-        const moveDist = Math.atan2(moveY, moveX);
+        const moveDist = Math.sqrt(moveY**2 + moveX**2);
         const movePercent = distance / moveDist;
    
         return { 

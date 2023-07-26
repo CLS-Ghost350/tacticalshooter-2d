@@ -10,7 +10,8 @@ const initialState = {
     weaponCounts: {
         "bow": Infinity,
         "knives": 5,
-        "fireballs": 3
+        "grenade": 2,
+        "fireball": 1
     }
 }
 

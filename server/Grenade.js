@@ -74,6 +74,7 @@ module.exports = class Grenade extends BouncingThrowable {
                 }
         }
 
+        //this.match.emitDebugPoint({ id: "grenadeExplosion", x: this.position.x, y: this.position.y, color: 0x00FF00, radius: Grenade.EXPLOSION_RADIUS })
         this.destroy()
     }
 

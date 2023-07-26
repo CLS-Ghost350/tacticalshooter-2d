@@ -1,13 +1,14 @@
 const GameObject = require("./GameObject.js");
 
 const Arrow = require("./Arrow.js");
-const BouncingThrowable = require("./BouncingThrowable.js");
+const Grenade = require("./Grenade.js");
+const Fireball = require("./Fireball.js");
+
 const util = require("../shared/util");
 const collisions = require("../shared/collisions");
 const lineOfSight = require("./lineOfSight");
 
 const bezier = require("bezier-easing");
-const Grenade = require("./Grenade.js");
 
 module.exports = class Player extends GameObject {
     // move settings to seperate file? make them static?
@@ -77,7 +78,8 @@ module.exports = class Player extends GameObject {
         this.updateRotation(deltaTime);
 
         this.updateBow(deltaTime); 
-        this.updateKnives(); 
+        this.updateGrenade(); 
+        this.updateFireball(); 
 
         //this.isVisibleFrom(300, 700); // debug
 
@@ -119,8 +121,8 @@ module.exports = class Player extends GameObject {
         }
     }
 
-    updateKnives() {
-        if (this.connection.weaponSelected != "knives") 
+    updateGrenade() {
+        if (this.connection.weaponSelected != "grenade") 
             return;
         
         if (this.connection.keyStates.includes("shoot") && !this.shotLast) {
@@ -134,6 +136,23 @@ module.exports = class Player extends GameObject {
             );
         }
     }
+
+    updateFireball() {
+        if (this.connection.weaponSelected != "fireball") 
+            return;
+        
+        if (this.connection.keyStates.includes("shoot") && !this.shotLast) {
+
+            const fireball = new Fireball(
+                this.match, 
+                this.position.x, 
+                this.position.y, 
+                this.angle, 
+                this.connection.team
+            );
+        }
+    }
+
 
     updateVelocity(deltaTime) {
         this.vel.x *= this.MOVE_FRICTION ** deltaTime;

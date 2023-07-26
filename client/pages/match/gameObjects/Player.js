@@ -15,8 +15,6 @@ export default class Player extends Phaser.GameObjects.Image {
         game.players[msg.id] = this;
         this.game = game;
 
-        console.log("test")
-
         this.setScale(0.75);
 
         this.handleServerUpdate(msg);

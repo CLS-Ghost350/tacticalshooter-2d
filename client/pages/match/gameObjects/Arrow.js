@@ -13,14 +13,9 @@ export default class Arrow extends Phaser.GameObjects.Image {
         this.game = game;
 
         this.setDepth(1000);
+        this.setOrigin(0.9, 0.5); // arrow's tip points to position
 
         this.handleServerUpdate(msg);
-    }
-
-    // arrow's tip points to position
-    setPosition(x, y) {
-        this.x = x - Math.cos(this.rotation) * this.LENGTH/2;
-        this.y = y - Math.sin(this.rotation) * this.LENGTH/2;
     }
 
     preUpdate(time,delta) {

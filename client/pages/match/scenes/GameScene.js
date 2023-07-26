@@ -10,6 +10,7 @@ import Arrow from "../gameObjects/Arrow";
 import Grenade from "../gameObjects/Grenade";
 import Shadows from "../gameObjects/Shadows";
 import Minimap from "../gameObjects/Minimap";
+import Fireball from "../gameObjects/Fireball";
 
 import VisibilityPolygon from "../VisibilityPolygon";
 import bezier from "bezier-easing";
@@ -25,7 +26,8 @@ export default class GameScene extends Phaser.Scene {
     gameObjectClasses = {
         "player": Player,
         "arrow": Arrow,
-        "grenade": Grenade
+        "grenade": Grenade,
+        "fireball": Fireball
     }
 
     updatingGameObjects = {};
@@ -34,7 +36,7 @@ export default class GameScene extends Phaser.Scene {
     arrows = {};
     grenades = {};
 
-    #debugPoints = {};
+    #debugPoints = {};//{ "spawn": { x: 300, y: 700, radius: 11 } };
 
     walls = [];
     unintersectingWalls = [];
@@ -63,6 +65,13 @@ export default class GameScene extends Phaser.Scene {
             key: "bowAnimation",
             frames: this.anims.generateFrameNumbers("bowSpritesheet"),
             frameRate: 16,
+        }); 
+
+        this.anims.create({
+            key: "fireballAnimation",
+            frames: this.anims.generateFrameNumbers("fireballSpritesheet"),
+            frameRate: 4,
+            repeat: -1
         }); 
         
         this.debug = this.add.graphics();
