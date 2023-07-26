@@ -131,68 +131,30 @@ module.exports = class BouncingThrowable extends GameObject {
             if (xAtRadius < 0 || xAtRadius > wlen || rotatedY <= this.radius) {
                 // circle will first collide with one of the line's endpoints
 
-                let collX = 0;
-                const collY = 0;
+                let collX = wx1;
+                let collY = wy1;
 
                 if (rotatedY <= this.radius) { // xAtRadius will be behind object's movement
-                    if (rotatedX > wlen) collX = wlen;
-                } else if (xAtRadius > wlen) 
-                    collX = wlen;
+                    if (rotatedX > wlen) {
+                        collX = wx2;
+                        collY = wy2;
+                    }
+                } else if (xAtRadius > wlen) {
+                    collX = wx2;
+                    collY = wy2;
+                }
 
                 // this.match.emitDebugPoint({ id: "BT_wallEndpointColl", x: collX, y: -collY  +400, color: 0xFFFF00, expiryTime: 1 })
 
-                // find points on velocity line where dist to point == radius
-                // this doesn't handle case where object is already touching wall endpoint beforehand
+                const coll = collisions.movingCircleCircle( this.position.x, this.position.y, this.radius,
+                    moveX, moveY, collX, collY, 0);
 
-                // make original position (after rotation) the origin for closest point
-                const movedCollX = collX - rotatedX;
-                const movedCollY = collY - rotatedY;
+                if (!coll) continue;
 
-                // rotate closest point about origin (original pos) by (rotated) movement angle
-                const rotatedWX = movedCollX * Math.cos(-rotatedMoveAngle)  -  movedCollY * Math.sin(-rotatedMoveAngle); 
-                const rotatedWY = movedCollX * Math.sin(-rotatedMoveAngle)  +  movedCollY * Math.cos(-rotatedMoveAngle); 
-
-                // this.match.emitDebugPoint({ id: "BT_endpointRotatedPos", x: 0  +600, y: 0  +600, color: 0xFF0000 })
-                // this.match.emitDebugPoint({ id: "BT_endpointRotatedNewPos", x: moveDist +600, y: 0  +600, color: 0xFF0000 })
-
-                // this.match.emitDebugPoint({ id: "BT_rotatedEndpoint", x: rotatedWX +600, y: -rotatedWY  +600, color: 0xFF00FF })
-
-                const discriminant = Math.sqrt(this.radius**2 - rotatedWY**2);
-
-                //console.log(discriminant)
-                //console.log(rotatedWX + " " + rotatedWY)
-
-                if (isNaN(discriminant)) // radius is never reached; line too far from wall endpoint
-                    continue;
-                
-                const circleIntersectStart = rotatedWX - discriminant;
-                const circleIntersectEnd = rotatedWX + discriminant;
-
-                // this.match.emitDebugPoint({ id: "BT_circleIntersectStart", 
-                //     x: this.position.x + Math.cos(this.angle)*circleIntersectStart, 
-                //     y: this.position.y + Math.sin(this.angle)*circleIntersectStart, 
-                //     color: 0x00FF00, expiryTime: 1 });
-
-                // this.match.emitDebugPoint({ id: "BT_circleIntersectEnd", 
-                //     x: this.position.x + Math.cos(this.angle)*circleIntersectEnd, 
-                //     y: this.position.y + Math.sin(this.angle)*circleIntersectEnd, 
-                //     color: 0x00FF00, expiryTime: 1 });
-
-                if (circleIntersectEnd < 0) continue; // collision is behind position
-                if (circleIntersectStart > moveDist) continue; // collision is in front of position
-
-                //console.log(circleIntersectStart + " " + minMove)
-
-                if (circleIntersectStart < minMove) {
-                    minMove = circleIntersectStart;
-                    
-                    if (collX == 0) {
-                        minMoveWallCollX = wx1;
-                        minMoveWallCollY = wy1;
-                    } else {
-                        minMoveWallCollX = wx2;
-                        minMoveWallCollY = wy2;
-                    }
+                if (coll.dist < minMove) {
+                    minMove = coll.dist;
+                    minMoveWallCollX = collX;
+                    minMoveWallCollY = collY;
                 }
 
             } else {

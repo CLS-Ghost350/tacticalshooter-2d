@@ -159,12 +159,71 @@ function pointTriangle(x, y, tx1, ty1, tx2, ty2, tx3, ty3, tArea) {
 //     ];
 // }
 
+function movingCircleCircle(x, y, radius, moveX, moveY, cx, cy, cRadius) {
+    const combinedRadius = radius + cRadius;
+
+    const moveAngle = Math.atan2(moveY, moveX);
+    const moveDist = Math.sqrt(moveX**2 + moveY**2);
+
+    // find points on movement line where dist to cpoint == combined radius
+
+    // make original position the origin for cpoint
+    const movedCX = cx - x;
+    const movedCY = cy - y;
+
+    // rotate cpoint about origin (original pos) by movement angle
+    const rotatedCX = movedCX * Math.cos(-moveAngle)  -  movedCY * Math.sin(-moveAngle); 
+    const rotatedCY = movedCX * Math.sin(-moveAngle)  +  movedCY * Math.cos(-moveAngle); 
+
+    // this.match.emitDebugPoint({ id: "BT_endpointRotatedPos", x: 0  +600, y: 0  +600, color: 0xFF0000 })
+    // this.match.emitDebugPoint({ id: "BT_endpointRotatedNewPos", x: moveDist +600, y: 0  +600, color: 0xFF0000 })
+
+    // this.match.emitDebugPoint({ id: "BT_rotatedEndpoint", x: rotatedWX +600, y: -rotatedWY  +600, color: 0xFF00FF })
+
+    const discriminant = Math.sqrt(combinedRadius**2 - rotatedCY**2);
+
+    //console.log(discriminant)
+    //console.log(rotatedWX + " " + rotatedWY)
+
+    if (isNaN(discriminant)) // radius is never reached; line too far from cpoint
+        return null;
+    
+    const circleIntersectStart = rotatedCX - discriminant;
+    const circleIntersectEnd = rotatedCX + discriminant;
+
+    // this.match.emitDebugPoint({ id: "BT_circleIntersectStart", 
+    //     x: this.position.x + Math.cos(this.angle)*circleIntersectStart, 
+    //     y: this.position.y + Math.sin(this.angle)*circleIntersectStart, 
+    //     color: 0x00FF00, expiryTime: 1 });
+
+    // this.match.emitDebugPoint({ id: "BT_circleIntersectEnd", 
+    //     x: this.position.x + Math.cos(this.angle)*circleIntersectEnd, 
+    //     y: this.position.y + Math.sin(this.angle)*circleIntersectEnd, 
+    //     color: 0x00FF00, expiryTime: 1 });
+
+    if (circleIntersectEnd < 0) return null; // collision is behind position
+    if (circleIntersectStart > moveDist) return null; // collision is in front of position
+
+    //console.log(circleIntersectStart + " " + minMove)
+
+    const movePercent = circleIntersectStart / moveDist;
+
+    return { 
+        x: x + moveX*movePercent, 
+        y: y + moveY*movePercent, 
+        dist: circleIntersectStart 
+    };
+}
+
 module.exports = {
     lineLine,
     lineCircle,
     linePoint,
     pointCircle,
     circleCircle,
+    pointTriangle,
+
     closestPointOnLine,
-    pointTriangle
+
+    movingCircleCircle
 }
