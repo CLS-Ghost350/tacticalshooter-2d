@@ -34,6 +34,13 @@ export default class LoadScene extends Phaser.Scene {
             margin: 1,
             spacing: 2
         })
+
+        this.load.spritesheet("laserSpritesheet",asset("laserSpritesheet.png"),{
+            frameWidth: 1,
+            frameHeight: 20,
+            margin: 0,
+            spacing: 0
+        });
     }
 
     create() {

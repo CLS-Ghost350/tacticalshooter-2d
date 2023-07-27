@@ -19,6 +19,7 @@ import { store } from "../store";
 import { setSetting } from "../storeSlices/settingsSlice";
 import { setScoreboardState, addPlayer, removePlayer } from "../storeSlices/scoreboardSlice";
 import { subscribeActionAfter, subscribeAfter } from 'redux-subscribe-action';
+import Laser from "../gameObjects/Laser";
 
 export default class GameScene extends Phaser.Scene {
     #gameInited = false;
@@ -72,6 +73,15 @@ export default class GameScene extends Phaser.Scene {
             frames: this.anims.generateFrameNumbers("fireballSpritesheet"),
             frameRate: 4,
             repeat: -1
+        }); 
+
+        const laserAnimationFrames = [ 2,4,2,5,2,6,2,7,3,8, 3,8,4,9, 9 ]
+
+        this.anims.create({
+            key: "laserAnimation",
+            frames: laserAnimationFrames.map(frame => ({ key: "laserSpritesheet", frame: frame })),
+            frameRate: 20,
+            hideOnComplete: true
         }); 
         
         this.debug = this.add.graphics();
@@ -188,6 +198,10 @@ export default class GameScene extends Phaser.Scene {
         socket.on("bowDrawStop",msg => {
             this.players[msg.playerID]?.bow.stopAnimation();
         });
+
+        socket.on("laser", msg => {
+            const laser = new Laser(this, msg.x, msg.y, msg.angle)
+        })
 
         socket.on("debugPoint", msg => {
             this.#debugPoints[msg.id] = msg;

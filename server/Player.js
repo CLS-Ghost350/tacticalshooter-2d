@@ -26,6 +26,9 @@ module.exports = class Player extends GameObject {
     BOW_DRAW_VEL_CURVE = bezier(1,0,1,0.2);
     get ARROW_VEL() { return 4000; }
 
+    LASER_CHARGE_TIME = 0.7;
+    LASER_WIDTH = 20;
+
     rotationVel = 0;
     angle = 0;
     position = { x: 300, y: 700 };
@@ -35,6 +38,7 @@ module.exports = class Player extends GameObject {
     previousWalls = [];
 
     bowDrawStatus = 0;
+    laserChargeStatus = 0;
 
     alive = true;
 
@@ -73,13 +77,24 @@ module.exports = class Player extends GameObject {
     update(deltaTime) {
         //const deltaTimeMul = deltaTime/1000 * this.match.CORRECT_TPS;
 
-        this.updateVelocity(deltaTime);
-        this.moveCollideWalls(deltaTime);
-        this.updateRotation(deltaTime);
+        if (this.laserChargeStatus == 0) {
+            this.updateVelocity(deltaTime);
+            this.updateRotation(deltaTime);
+        } else {
+            this.vel.x = 0;
+            this.vel.y = 0;
+            this.rotationVel = 0;
+        }
 
-        this.updateBow(deltaTime); 
-        this.updateGrenade(); 
-        this.updateFireball(); 
+        this.moveCollideWalls(deltaTime);
+
+        if (this.laserChargeStatus == 0) {
+            this.updateBow(deltaTime); 
+            this.updateGrenade(); 
+            this.updateFireball();
+        }
+
+        this.updateLaser(deltaTime);
 
         //this.isVisibleFrom(300, 700); // debug
 
@@ -97,7 +112,7 @@ module.exports = class Player extends GameObject {
             return;
         }
 
-        if (this.connection.keyStates.includes("shoot")) { // holding shoot button (right-click)
+        if (this.connection.keyStates.includes("shoot")) { // holding shoot button 
             if (this.bowDrawStatus == 0) this.match.namespace.emit("bowDraw",{ playerID: this.id }) // start drawing
             if (this.bowDrawStatus < this.BOW_DRAW_TIME) this.bowDrawStatus += deltaTime; // increase time drawn
         } else if (this.bowDrawStatus > 0) { 
@@ -154,6 +169,40 @@ module.exports = class Player extends GameObject {
         }
     }
 
+    updateLaser(deltaTime) {
+        if (this.laserChargeStatus == 0) {
+            if (this.connection.weaponSelected == "laser" && this.connection.keyStates.includes("shoot")) {
+                this.laserChargeStatus += deltaTime
+                this.match.namespace.emit("laser", { x: this.position.x, y: this.position.y, angle: this.angle });
+            }
+        } else {
+            this.laserChargeStatus += deltaTime;
+
+            if (this.laserChargeStatus >= this.LASER_CHARGE_TIME) {
+                this.laserChargeStatus = 0;
+
+                // fire laser
+                for (const conn of Object.values(this.match.connections)) {
+                    if (!conn.player) continue;
+                    if (conn.team == this.connection.team) continue;
+
+                    const radianAngle = util.degreesToRadians(this.angle);
+
+                    const coll = collisions.lineCircle(
+                        this.position.x, 
+                        this.position.y, 
+                        this.position.x + Math.cos(radianAngle)*50000,
+                        this.position.y + Math.sin(radianAngle)*50000,
+                        conn.player.position.x,
+                        conn.player.position.y,
+                        conn.player.RADIUS + this.LASER_WIDTH/2
+                    )
+
+                    if (coll) conn.player.kill();
+                }
+            }
+        }
+    }
 
     updateVelocity(deltaTime) {
         this.vel.x *= this.MOVE_FRICTION ** deltaTime;

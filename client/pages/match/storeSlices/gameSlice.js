@@ -11,7 +11,8 @@ const initialState = {
         "bow": Infinity,
         "knives": 5,
         "grenade": 2,
-        "fireball": 1
+        "fireball": 3,
+        "laser": 1
     }
 }
 
